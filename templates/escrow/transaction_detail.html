@@ -1,0 +1,765 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Transaction #{{ transaction.id|default:"12345" }} - Kimi Escrow{% endblock %}
+
+{% block extra_css %}
+<style>
+    .transaction-header {
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        color: white;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+    }
+    
+    .status-timeline {
+        position: relative;
+        padding: 1rem 0;
+    }
+    
+    .timeline-step {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        position: relative;
+    }
+    
+    .timeline-step:not(:last-child)::after {
+        content: '';
+        position: absolute;
+        left: 1rem;
+        top: 2.5rem;
+        width: 2px;
+        height: calc(100% + 0.5rem);
+        background-color: #dee2e6;
+        z-index: 1;
+    }
+    
+    .timeline-step.completed::after {
+        background-color: #28a745;
+    }
+    
+    .timeline-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+        font-size: 0.875rem;
+        font-weight: bold;
+        z-index: 2;
+        position: relative;
+    }
+    
+    .timeline-icon.completed {
+        background-color: #28a745;
+        color: white;
+    }
+    
+    .timeline-icon.current {
+        background-color: #007bff;
+        color: white;
+    }
+    
+    .timeline-icon.pending {
+        background-color: #e9ecef;
+        color: #6c757d;
+        border: 2px solid #dee2e6;
+    }
+    
+    .timeline-content h6 {
+        margin-bottom: 0.25rem;
+        font-weight: 600;
+    }
+    
+    .timeline-content small {
+        color: #6c757d;
+    }
+    
+    .transaction-info .info-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #f1f3f4;
+    }
+    
+    .transaction-info .info-item:last-child {
+        border-bottom: none;
+    }
+    
+    .action-buttons .btn {
+        margin-right: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .message-thread {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    
+    .message-item {
+        margin-bottom: 1rem;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        position: relative;
+    }
+    
+    .message-item.own {
+        background-color: #e3f2fd;
+        margin-left: 2rem;
+    }
+    
+    .message-item.other {
+        background-color: #f8f9fa;
+        margin-right: 2rem;
+    }
+    
+    .message-sender {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: #007bff;
+    }
+    
+    .message-time {
+        font-size: 0.75rem;
+        color: #6c757d;
+        position: absolute;
+        bottom: 0.5rem;
+        right: 1rem;
+    }
+    
+    .evidence-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+    
+    .evidence-item {
+        border: 1px solid #dee2e6;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .evidence-item:hover {
+        border-color: #007bff;
+        transform: translateY(-2px);
+    }
+    
+    .evidence-icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+        color: #007bff;
+    }
+    
+    .amount-breakdown {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .amount-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+    
+    .amount-row.total {
+        font-weight: bold;
+        font-size: 1.125rem;
+        border-top: 2px solid #dee2e6;
+        padding-top: 0.5rem;
+        margin-top: 1rem;
+        margin-bottom: 0;
+    }
+    
+    .dispute-alert {
+        border-left: 4px solid #dc3545;
+        background-color: rgba(220, 53, 69, 0.1);
+    }
+    
+    .success-alert {
+        border-left: 4px solid #28a745;
+        background-color: rgba(40, 167, 69, 0.1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="transaction-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="mb-2">
+                    <i class="bi bi-receipt me-3"></i>
+                    Transaction #{{ transaction.id|default:"12345" }}
+                </h1>
+                <p class="mb-0 opacity-75">
+                    {{ transaction.title|default:"iPhone 13 Pro Max 256GB Noir" }}
+                </p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <div class="d-flex flex-column align-items-md-end">
+                    <span class="badge bg-{{ transaction.status|default:'info' }} fs-6 mb-2">
+                        {% if transaction.status == 'PENDING' %}
+                            En attente
+                        {% elif transaction.status == 'PAYMENT_CONFIRMED' %}
+                            Paiement confirmé
+                        {% elif transaction.status == 'DELIVERED' %}
+                            Livré
+                        {% elif transaction.status == 'COMPLETED' %}
+                            Terminé
+                        {% elif transaction.status == 'DISPUTED' %}
+                            En litige
+                        {% else %}
+                            En attente
+                        {% endif %}
+                    </span>
+                    <h3 class="mb-0">{{ transaction.amount|default:"1,500,000" }} FCFA</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row">
+        <!-- Contenu principal -->
+        <div class="col-lg-8">
+            <!-- Alertes importantes -->
+            {% if transaction.status == 'DISPUTED' %}
+            <div class="alert dispute-alert mb-4" role="alert">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-exclamation-triangle fs-4 me-3"></i>
+                    <div>
+                        <h6 class="alert-heading mb-1">Litige en cours</h6>
+                        <p class="mb-0">Cette transaction fait l'objet d'un litige. Un arbitre a été assigné pour résoudre le conflit.</p>
+                    </div>
+                </div>
+            </div>
+            {% elif transaction.status == 'COMPLETED' %}
+            <div class="alert success-alert mb-4" role="alert">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-check-circle fs-4 me-3"></i>
+                    <div>
+                        <h6 class="alert-heading mb-1">Transaction terminée</h6>
+                        <p class="mb-0">Cette transaction a été complétée avec succès. Les fonds ont été libérés au vendeur.</p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Progression de la transaction -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-arrow-right-circle me-2"></i>
+                        Progression de la transaction
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="status-timeline">
+                        <div class="timeline-step completed">
+                            <div class="timeline-icon completed">
+                                <i class="bi bi-check"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <h6>Transaction créée</h6>
+                                <small>{{ transaction.created_at|default:"12 août 2025, 15:30" }}</small>
+                            </div>
+                        </div>
+                        
+                        <div class="timeline-step {% if transaction.status != 'PENDING' %}completed{% else %}current{% endif %}">
+                            <div class="timeline-icon {% if transaction.status != 'PENDING' %}completed{% else %}current{% endif %}">
+                                {% if transaction.status != 'PENDING' %}
+                                    <i class="bi bi-check"></i>
+                                {% else %}
+                                    <i class="bi bi-credit-card"></i>
+                                {% endif %}
+                            </div>
+                            <div class="timeline-content">
+                                <h6>Paiement effectué</h6>
+                                <small>
+                                    {% if transaction.status != 'PENDING' %}
+                                        {{ transaction.payment_date|default:"12 août 2025, 16:45" }}
+                                    {% else %}
+                                        En attente du paiement
+                                    {% endif %}
+                                </small>
+                            </div>
+                        </div>
+                        
+                        <div class="timeline-step {% if transaction.status == 'DELIVERED' or transaction.status == 'COMPLETED' %}completed{% elif transaction.status == 'PAYMENT_CONFIRMED' %}current{% else %}pending{% endif %}">
+                            <div class="timeline-icon {% if transaction.status == 'DELIVERED' or transaction.status == 'COMPLETED' %}completed{% elif transaction.status == 'PAYMENT_CONFIRMED' %}current{% else %}pending{% endif %}">
+                                {% if transaction.status == 'DELIVERED' or transaction.status == 'COMPLETED' %}
+                                    <i class="bi bi-check"></i>
+                                {% elif transaction.status == 'PAYMENT_CONFIRMED' %}
+                                    <i class="bi bi-truck"></i>
+                                {% else %}
+                                    <i class="bi bi-truck"></i>
+                                {% endif %}
+                            </div>
+                            <div class="timeline-content">
+                                <h6>Livraison</h6>
+                                <small>
+                                    {% if transaction.status == 'DELIVERED' or transaction.status == 'COMPLETED' %}
+                                        {{ transaction.delivery_date|default:"13 août 2025, 10:20" }}
+                                    {% elif transaction.status == 'PAYMENT_CONFIRMED' %}
+                                        En cours de livraison
+                                    {% else %}
+                                        En attente
+                                    {% endif %}
+                                </small>
+                            </div>
+                        </div>
+                        
+                        <div class="timeline-step {% if transaction.status == 'COMPLETED' %}completed{% elif transaction.status == 'DELIVERED' %}current{% else %}pending{% endif %}">
+                            <div class="timeline-icon {% if transaction.status == 'COMPLETED' %}completed{% elif transaction.status == 'DELIVERED' %}current{% else %}pending{% endif %}">
+                                {% if transaction.status == 'COMPLETED' %}
+                                    <i class="bi bi-check"></i>
+                                {% elif transaction.status == 'DELIVERED' %}
+                                    <i class="bi bi-star"></i>
+                                {% else %}
+                                    <i class="bi bi-star"></i>
+                                {% endif %}
+                            </div>
+                            <div class="timeline-content">
+                                <h6>Confirmation & Évaluation</h6>
+                                <small>
+                                    {% if transaction.status == 'COMPLETED' %}
+                                        {{ transaction.completed_date|default:"13 août 2025, 14:15" }}
+                                    {% elif transaction.status == 'DELIVERED' %}
+                                        En attente de confirmation
+                                    {% else %}
+                                        En attente
+                                    {% endif %}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Actions disponibles -->
+            {% if user.is_authenticated %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-gear me-2"></i>
+                        Actions disponibles
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="action-buttons">
+                        {% if user.profile.role == 'BUYER' %}
+                            {% if transaction.status == 'PENDING' %}
+                                <button class="btn btn-success" onclick="payTransaction({{ transaction.id|default:12345 }})">
+                                    <i class="bi bi-credit-card me-2"></i>Effectuer le paiement
+                                </button>
+                            {% elif transaction.status == 'DELIVERED' %}
+                                <button class="btn btn-success" onclick="confirmDelivery({{ transaction.id|default:12345 }})">
+                                    <i class="bi bi-check-circle me-2"></i>Confirmer la réception
+                                </button>
+                                <button class="btn btn-warning" onclick="openDispute({{ transaction.id|default:12345 }})">
+                                    <i class="bi bi-exclamation-triangle me-2"></i>Signaler un problème
+                                </button>
+                            {% endif %}
+                        {% elif user.profile.role == 'SELLER' %}
+                            {% if transaction.status == 'PAYMENT_CONFIRMED' %}
+                                <button class="btn btn-primary" onclick="markAsDelivered({{ transaction.id|default:12345 }})">
+                                    <i class="bi bi-truck me-2"></i>Marquer comme livré
+                                </button>
+                            {% endif %}
+                        {% endif %}
+                        
+                        <!-- Actions communes -->
+                        <button class="btn btn-outline-primary" onclick="sendMessage()">
+                            <i class="bi bi-chat me-2"></i>Envoyer un message
+                        </button>
+                        <button class="btn btn-outline-info" onclick="downloadReceipt({{ transaction.id|default:12345 }})">
+                            <i class="bi bi-download me-2"></i>Télécharger reçu
+                        </button>
+                        <button class="btn btn-outline-secondary" onclick="shareTransaction({{ transaction.id|default:12345 }})">
+                            <i class="bi bi-share me-2"></i>Partager
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Messages -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">
+                        <i class="bi bi-chat-dots me-2"></i>
+                        Conversation
+                    </h6>
+                    <small class="text-muted">{{ messages|length|default:2 }} message(s)</small>
+                </div>
+                <div class="card-body">
+                    <div class="message-thread" id="messageThread">
+                        <!-- Messages simulés -->
+                        <div class="message-item other">
+                            <div class="message-sender">
+                                <i class="bi bi-person-circle me-1"></i>
+                                {{ transaction.seller_name|default:"Marie Vendor" }}
+                            </div>
+                            <div class="message-content">
+                                Bonjour ! Je confirme que le produit est disponible et en parfait état. Je peux procéder à l'expédition dès réception du paiement.
+                            </div>
+                            <div class="message-time">Il y a 2h</div>
+                        </div>
+                        
+                        <div class="message-item own">
+                            <div class="message-sender">
+                                <i class="bi bi-person-circle me-1"></i>
+                                Vous
+                            </div>
+                            <div class="message-content">
+                                Parfait ! Je vais procéder au paiement maintenant. Combien de temps pour la livraison ?
+                            </div>
+                            <div class="message-time">Il y a 1h</div>
+                        </div>
+                        
+                        <div class="message-item other">
+                            <div class="message-sender">
+                                <i class="bi bi-person-circle me-1"></i>
+                                {{ transaction.seller_name|default:"Marie Vendor" }}
+                            </div>
+                            <div class="message-content">
+                                La livraison se fera dans les 24h après confirmation du paiement. Merci !
+                            </div>
+                            <div class="message-time">Il y a 30min</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Nouveau message -->
+                    {% if user.is_authenticated %}
+                    <hr>
+                    <form id="messageForm" class="mt-3">
+                        {% csrf_token %}
+                        <div class="input-group">
+                            <textarea class="form-control" rows="2" placeholder="Tapez votre message..." id="messageText" required></textarea>
+                            <button class="btn btn-primary" type="submit">
+                                <i class="bi bi-send"></i>
+                            </button>
+                        </div>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Panneau latéral -->
+        <div class="col-lg-4">
+            <!-- Détails de la transaction -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Détails de la transaction
+                    </h6>
+                </div>
+                <div class="card-body p-0">
+                    <div class="transaction-info">
+                        <div class="info-item">
+                            <span>ID Transaction</span>
+                            <span class="fw-bold">#{{ transaction.id|default:"12345" }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span>Catégorie</span>
+                            <span>{{ transaction.category|default:"Électronique" }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span>Acheteur</span>
+                            <span>{{ transaction.buyer_name|default:"Jean Achille" }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span>Vendeur</span>
+                            <span>{{ transaction.seller_name|default:"Marie Vendor" }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span>Date de création</span>
+                            <span>{{ transaction.created_at|default:"12 août 2025" }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span>Délai de livraison</span>
+                            <span>{{ transaction.delivery_deadline|default:"15 août 2025" }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span>Adresse de livraison</span>
+                            <span class="small">{{ transaction.delivery_address|default:"Douala, Akwa, Rue des Cocotiers" }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Répartition des coûts -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-calculator me-2"></i>
+                        Répartition des coûts
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="amount-breakdown">
+                        <div class="amount-row">
+                            <span>Prix du produit</span>
+                            <span>{{ transaction.amount|default:"1,500,000" }} FCFA</span>
+                        </div>
+                        <div class="amount-row">
+                            <span>Frais Kimi Escrow (2.5%)</span>
+                            <span>{{ transaction.platform_fee|default:"37,500" }} FCFA</span>
+                        </div>
+                        <div class="amount-row">
+                            <span>Frais de livraison</span>
+                            <span>{{ transaction.delivery_fee|default:"5,000" }} FCFA</span>
+                        </div>
+                        <div class="amount-row total">
+                            <span>Total</span>
+                            <span>{{ transaction.total_amount|default:"1,542,500" }} FCFA</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sécurité -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-shield-check me-2"></i>
+                        Sécurité
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="bi bi-lock-fill text-success me-3 fs-4"></i>
+                        <div>
+                            <h6 class="mb-1">Transaction sécurisée</h6>
+                            <small class="text-muted">Fonds protégés par escrow</small>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex align-items-center mb-3">
+                        <i class="bi bi-shield-check text-success me-3 fs-4"></i>
+                        <div>
+                            <h6 class="mb-1">Utilisateurs vérifiés</h6>
+                            <small class="text-muted">KYC complet des deux parties</small>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-headset text-info me-3 fs-4"></i>
+                        <div>
+                            <h6 class="mb-1">Support 24/7</h6>
+                            <small class="text-muted">Assistance en cas de problème</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Actions rapides -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-lightning me-2"></i>
+                        Besoin d'aide ?
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button type="button" class="btn btn-outline-primary btn-sm" onclick="openSupport()">
+                            <i class="bi bi-headset me-2"></i>Contacter le support
+                        </button>
+                        <button type="button" class="btn btn-outline-info btn-sm" onclick="showFAQ()">
+                            <i class="bi bi-question-circle me-2"></i>FAQ
+                        </button>
+                        <button type="button" class="btn btn-outline-warning btn-sm" onclick="reportProblem()">
+                            <i class="bi bi-flag me-2"></i>Signaler un problème
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Form de message
+    const messageForm = document.getElementById('messageForm');
+    if (messageForm) {
+        messageForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            sendMessage();
+        });
+    }
+    
+    // Auto-scroll des messages
+    const messageThread = document.getElementById('messageThread');
+    if (messageThread) {
+        messageThread.scrollTop = messageThread.scrollHeight;
+    }
+    
+    // Auto-refresh toutes les 30 secondes
+    setInterval(refreshMessages, 30000);
+});
+
+function sendMessage() {
+    const messageText = document.getElementById('messageText');
+    if (!messageText || !messageText.value.trim()) return;
+    
+    const message = messageText.value.trim();
+    
+    // Ajouter le message à la conversation
+    const messageThread = document.getElementById('messageThread');
+    const messageHTML = `
+        <div class="message-item own">
+            <div class="message-sender">
+                <i class="bi bi-person-circle me-1"></i>
+                Vous
+            </div>
+            <div class="message-content">${message}</div>
+            <div class="message-time">À l'instant</div>
+        </div>
+    `;
+    
+    messageThread.insertAdjacentHTML('beforeend', messageHTML);
+    messageThread.scrollTop = messageThread.scrollHeight;
+    
+    // Vider le champ
+    messageText.value = '';
+    
+    // Simulation API call
+    fetch('{% url "ajax_send_message" transaction.id|default:12345 %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ message: message })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('Message envoyé', 'success');
+        } else {
+            showToast('Erreur d\'envoi', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('Erreur de connexion', 'error');
+    });
+}
+
+function refreshMessages() {
+    // Simulation de refresh des messages
+    // En production, faire un appel API pour récupérer les nouveaux messages
+}
+
+function payTransaction(transactionId) {
+    window.location.href = `/payments/pay/${transactionId}/`;
+}
+
+function confirmDelivery(transactionId) {
+    if (confirm('Confirmer que vous avez bien reçu le produit/service ?')) {
+        performTransactionAction(transactionId, 'confirm_delivery');
+    }
+}
+
+function markAsDelivered(transactionId) {
+    const notes = prompt('Notes sur la livraison (optionnel):');
+    performTransactionAction(transactionId, 'mark_delivered', { notes });
+}
+
+function openDispute(transactionId) {
+    window.location.href = `/disputes/create/?transaction=${transactionId}`;
+}
+
+async function performTransactionAction(transactionId, action, data = {}) {
+    try {
+        const response = await fetch(`{% url "ajax_transaction_action" transaction.id|default:12345 %}`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ action, ...data })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showToast(result.message, 'success');
+            setTimeout(() => window.location.reload(), 1500);
+        } else {
+            showToast(result.message, 'error');
+        }
+    } catch (error) {
+        showToast('Erreur de connexion', 'error');
+    }
+}
+
+function downloadReceipt(transactionId) {
+    window.open(`/api/transactions/${transactionId}/receipt/`, '_blank');
+}
+
+function shareTransaction(transactionId) {
+    const url = window.location.href;
+    if (navigator.share) {
+        navigator.share({
+            title: 'Transaction Kimi Escrow',
+            text: 'Voir cette transaction sécurisée',
+            url: url
+        });
+    } else {
+        // Fallback: copier l'URL
+        navigator.clipboard.writeText(url).then(() => {
+            showToast('Lien copié dans le presse-papiers', 'success');
+        });
+    }
+}
+
+function openSupport() {
+    window.open('mailto:support@kimi-escrow.com?subject=Support Transaction #{{ transaction.id|default:12345 }}', '_blank');
+}
+
+function showFAQ() {
+    window.open('/help/faq/', '_blank');
+}
+
+function reportProblem() {
+    window.location.href = '/support/report-problem/?transaction={{ transaction.id|default:12345 }}';
+}
+
+function showToast(message, type) {
+    // Créer un toast simple
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type === 'success' ? 'success' : 'danger'} position-fixed top-0 start-50 translate-middle-x mt-3`;
+    toast.style.zIndex = '9999';
+    toast.innerHTML = `
+        <i class="bi bi-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
+        ${message}
+    `;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.remove();
+    }, 3000);
+}
+</script>
+{% endblock %}

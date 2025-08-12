@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mes Transactions - Kimi Escrow</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-shield-check me-2"></i>Kimi Escrow
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/">Accueil</a>
+                <a class="nav-link" href="/dashboard/buyer/">Dashboard</a>
+                <a class="nav-link" href="/profile/">Profil</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container py-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="bi bi-cart-check me-2"></i>Mes Transactions</h2>
+            <a href="/transactions/create/" class="btn btn-primary">
+                <i class="bi bi-plus-circle me-2"></i>Nouvelle transaction
+            </a>
+        </div>
+
+        <!-- Filters -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <select class="form-select">
+                            <option value="">Tous les statuts</option>
+                            <option value="PENDING">En attente</option>
+                            <option value="CONFIRMED">Confirmé</option>
+                            <option value="DELIVERED">Livré</option>
+                            <option value="COMPLETED">Terminé</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <input type="date" class="form-control" placeholder="Date de début">
+                    </div>
+                    <div class="col-md-3">
+                        <input type="date" class="form-control" placeholder="Date de fin">
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-outline-secondary w-100">
+                            <i class="bi bi-funnel me-2"></i>Filtrer
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Transactions List -->
+        <div class="row g-4">
+            <!-- Transaction 1 -->
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100">
+                    <div class="card-header d-flex justify-content-between">
+                        <span class="fw-bold">#TXN12345</span>
+                        <span class="badge bg-success">Terminé</span>
+                    </div>
+                    <div class="card-body">
+                        <h6>Téléphone Samsung Galaxy S24</h6>
+                        <p class="text-muted small">Vendeur: +237698765432</p>
+                        <p class="text-primary fw-bold">450,000 FCFA</p>
+                        <p class="small text-muted">Créé le 05/08/2025</p>
+                        <div class="d-grid gap-2">
+                            <a href="/transactions/12345/" class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-eye me-1"></i>Voir détails
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Transaction 2 -->
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100">
+                    <div class="card-header d-flex justify-content-between">
+                        <span class="fw-bold">#TXN12346</span>
+                        <span class="badge bg-warning">En attente de livraison</span>
+                    </div>
+                    <div class="card-body">
+                        <h6>Ordinateur portable HP Pavilion</h6>
+                        <p class="text-muted small">Vendeur: +237655555555</p>
+                        <p class="text-primary fw-bold">800,000 FCFA</p>
+                        <p class="small text-muted">Créé le 10/08/2025</p>
+                        <div class="d-grid gap-2">
+                            <a href="/transactions/12346/" class="btn btn-outline-warning btn-sm">
+                                <i class="bi bi-clock me-1"></i>Suivre livraison
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Transaction 3 -->
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100">
+                    <div class="card-header d-flex justify-content-between">
+                        <span class="fw-bold">#TXN12347</span>
+                        <span class="badge bg-info">Livré - À confirmer</span>
+                    </div>
+                    <div class="card-body">
+                        <h6>Montre connectée Apple Watch</h6>
+                        <p class="text-muted small">Vendeur: +237611111111</p>
+                        <p class="text-primary fw-bold">350,000 FCFA</p>
+                        <p class="small text-muted">Créé le 11/08/2025</p>
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-success btn-sm">
+                                <i class="bi bi-check-circle me-1"></i>Confirmer réception
+                            </button>
+                            <button class="btn btn-outline-danger btn-sm">
+                                <i class="bi bi-exclamation-triangle me-1"></i>Ouvrir litige
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Transaction 4 -->
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100">
+                    <div class="card-header d-flex justify-content-between">
+                        <span class="fw-bold">#TXN12348</span>
+                        <span class="badge bg-primary">Confirmé</span>
+                    </div>
+                    <div class="card-body">
+                        <h6>Tablette iPad Air</h6>
+                        <p class="text-muted small">Vendeur: +237622222222</p>
+                        <p class="text-primary fw-bold">600,000 FCFA</p>
+                        <p class="small text-muted">Créé le 12/08/2025</p>
+                        <div class="d-grid gap-2">
+                            <a href="/transactions/12348/" class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-eye me-1"></i>Voir détails
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Transaction 5 -->
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100">
+                    <div class="card-header d-flex justify-content-between">
+                        <span class="fw-bold">#TXN12349</span>
+                        <span class="badge bg-danger">Litige ouvert</span>
+                    </div>
+                    <div class="card-body">
+                        <h6>Écouteurs AirPods Pro</h6>
+                        <p class="text-muted small">Vendeur: +237633333333</p>
+                        <p class="text-primary fw-bold">200,000 FCFA</p>
+                        <p class="small text-muted">Créé le 08/08/2025</p>
+                        <div class="d-grid gap-2">
+                            <a href="/disputes/DSP001/" class="btn btn-outline-danger btn-sm">
+                                <i class="bi bi-exclamation-triangle me-1"></i>Voir litige
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        <nav aria-label="Page navigation" class="mt-5">
+            <ul class="pagination justify-content-center">
+                <li class="page-item disabled">
+                    <a class="page-link" href="#" tabindex="-1">Précédent</a>
+                </li>
+                <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                <li class="page-item"><a class="page-link" href="#">2</a></li>
+                <li class="page-item"><a class="page-link" href="#">3</a></li>
+                <li class="page-item">
+                    <a class="page-link" href="#">Suivant</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

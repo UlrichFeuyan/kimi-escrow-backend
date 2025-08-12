@@ -1,0 +1,382 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard Vendeur - Kimi Escrow{% endblock %}
+
+{% block extra_css %}
+<style>
+    .dashboard-header {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+    }
+    
+    .order-card {
+        transition: all 0.3s ease;
+        border-left: 4px solid transparent;
+    }
+    
+    .order-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+    }
+    
+    .order-card.new { border-left-color: #ffc107; }
+    .order-card.paid { border-left-color: #17a2b8; }
+    .order-card.delivered { border-left-color: #007bff; }
+    .order-card.completed { border-left-color: #28a745; }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Dashboard Header -->
+<div class="dashboard-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="mb-2">
+                    <i class="bi bi-shop me-3"></i>
+                    Tableau de bord vendeur
+                </h1>
+                <p class="mb-0 opacity-75">
+                    Gérez vos ventes et maximisez vos revenus
+                </p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <div class="d-flex align-items-center justify-content-md-end gap-2">
+                    <span class="badge bg-light text-dark px-3 py-2">
+                        <i class="bi bi-star-fill text-warning me-1"></i>4.8/5
+                    </span>
+                    {% if user.profile.kyc_status == 'VERIFIED' %}
+                        <span class="badge bg-success px-3 py-2">
+                            <i class="bi bi-shield-check me-1"></i>KYC Vérifié
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Statistics -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="card stats-card h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="stats-icon warning me-3">
+                            <i class="bi bi-clock"></i>
+                        </div>
+                        <div>
+                            <h3 class="mb-0">{{ new_orders_count|default:0 }}</h3>
+                            <p class="text-muted mb-0">Nouvelles commandes</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card stats-card h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="stats-icon info me-3">
+                            <i class="bi bi-truck"></i>
+                        </div>
+                        <div>
+                            <h3 class="mb-0">{{ stats.pending_delivery|default:0 }}</h3>
+                            <p class="text-muted mb-0">À livrer</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card stats-card h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="stats-icon success me-3">
+                            <i class="bi bi-check-circle"></i>
+                        </div>
+                        <div>
+                            <h3 class="mb-0">{{ stats.completed_sales|default:0 }}</h3>
+                            <p class="text-muted mb-0">Ventes terminées</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card stats-card h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="stats-icon primary me-3">
+                            <i class="bi bi-cash-stack"></i>
+                        </div>
+                        <div>
+                            <h3 class="mb-0">{{ stats.total_earnings|default:0|floatformat:0 }}</h3>
+                            <p class="text-muted mb-0">Revenus (FCFA)</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="row g-4 mb-4">
+        <div class="col-12">
+            <h5 class="mb-3">Actions rapides</h5>
+        </div>
+        
+        <div class="col-md-3">
+            <a href="{% url 'seller_transactions' %}?status=PENDING" class="btn quick-action-btn w-100 d-flex flex-column align-items-center justify-content-center">
+                <i class="bi bi-bell display-6 mb-2 text-warning"></i>
+                <span class="fw-bold">Nouvelles commandes</span>
+                <small>Répondre aux demandes</small>
+            </a>
+        </div>
+        
+        <div class="col-md-3">
+            <a href="{% url 'seller_transactions' %}?status=PAYMENT_CONFIRMED" class="btn quick-action-btn w-100 d-flex flex-column align-items-center justify-content-center">
+                <i class="bi bi-truck display-6 mb-2 text-info"></i>
+                <span class="fw-bold">Livraisons</span>
+                <small>Gérer les livraisons</small>
+            </a>
+        </div>
+        
+        <div class="col-md-3">
+            <a href="{% url 'seller_earnings' %}" class="btn quick-action-btn w-100 d-flex flex-column align-items-center justify-content-center">
+                <i class="bi bi-graph-up display-6 mb-2 text-success"></i>
+                <span class="fw-bold">Mes revenus</span>
+                <small>Voir les gains</small>
+            </a>
+        </div>
+        
+        <div class="col-md-3">
+            <a href="{% url 'seller_disputes' %}" class="btn quick-action-btn w-100 d-flex flex-column align-items-center justify-content-center">
+                <i class="bi bi-exclamation-triangle display-6 mb-2 text-danger"></i>
+                <span class="fw-bold">Litiges</span>
+                <small>Résoudre les problèmes</small>
+            </a>
+        </div>
+    </div>
+    
+    <div class="row g-4">
+        <!-- Recent Orders -->
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-list-ul me-2"></i>
+                        Commandes récentes
+                    </h5>
+                    <a href="{% url 'seller_transactions' %}" class="btn btn-outline-primary btn-sm">
+                        Voir tout
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if recent_orders %}
+                        <div id="orders-list">
+                            <!-- Les commandes seront chargées via JavaScript -->
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="bi bi-shop display-1 text-muted"></i>
+                            <h5 class="mt-3">Aucune commande</h5>
+                            <p class="text-muted">Partagez vos produits pour recevoir des commandes.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Performance & Tips -->
+        <div class="col-lg-4">
+            <!-- Performance -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-graph-up me-2"></i>
+                        Performance
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>Taux de réponse</span>
+                            <span class="fw-bold text-success">98%</span>
+                        </div>
+                        <div class="progress mt-1" style="height: 4px;">
+                            <div class="progress-bar bg-success" style="width: 98%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>Livraisons à temps</span>
+                            <span class="fw-bold text-info">95%</span>
+                        </div>
+                        <div class="progress mt-1" style="height: 4px;">
+                            <div class="progress-bar bg-info" style="width: 95%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between">
+                            <span>Satisfaction client</span>
+                            <span class="fw-bold text-warning">4.8/5</span>
+                        </div>
+                        <div class="progress mt-1" style="height: 4px;">
+                            <div class="progress-bar bg-warning" style="width: 96%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sales Tips -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-lightbulb me-2"></i>
+                        Conseils de vente
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="d-flex align-items-start">
+                            <i class="bi bi-camera text-primary me-2 mt-1"></i>
+                            <small>
+                                Ajoutez des photos de qualité pour attirer plus d'acheteurs.
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="d-flex align-items-start">
+                            <i class="bi bi-clock text-success me-2 mt-1"></i>
+                            <small>
+                                Répondez rapidement aux messages pour améliorer votre réputation.
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="d-flex align-items-start">
+                            <i class="bi bi-shield-check text-info me-2 mt-1"></i>
+                            <small>
+                                Fournissez des preuves de livraison pour éviter les litiges.
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-0">
+                        <div class="d-flex align-items-start">
+                            <i class="bi bi-star text-warning me-2 mt-1"></i>
+                            <small>
+                                Maintenez une note élevée pour augmenter votre visibilité.
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadRecentOrders();
+});
+
+async function loadRecentOrders() {
+    try {
+        const response = await apiRequest('/api/escrow/transactions/', {
+            seller: KimiEscrow.currentUser.id,
+            limit: 5,
+            ordering: '-created_at'
+        });
+        
+        if (response.success && response.data.results.length > 0) {
+            displayRecentOrders(response.data.results);
+        }
+    } catch (error) {
+        console.error('Erreur chargement commandes:', error);
+    }
+}
+
+function displayRecentOrders(orders) {
+    const container = document.getElementById('orders-list');
+    if (!container) return;
+    
+    const html = orders.map(order => `
+        <div class="order-card mb-3 p-3 border rounded ${getOrderClass(order.status)}">
+            <div class="d-flex justify-content-between align-items-start">
+                <div class="flex-grow-1">
+                    <h6 class="mb-1">${order.title}</h6>
+                    <p class="text-muted mb-2 small">Client: ${order.buyer_name || order.buyer_phone}</p>
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="badge bg-light text-dark">
+                            <i class="bi bi-cash me-1"></i>${formatAmount(order.amount)}
+                        </span>
+                        ${getStatusBadge(order.status)}
+                        <small class="text-muted">
+                            <i class="bi bi-calendar me-1"></i>${formatDate(order.created_at)}
+                        </small>
+                    </div>
+                </div>
+                <div class="ms-3">
+                    <div class="btn-group">
+                        <a href="/escrow/transaction/${order.id}/" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                        ${getOrderActions(order)}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+    
+    container.innerHTML = html;
+}
+
+function getOrderClass(status) {
+    switch(status) {
+        case 'PENDING': return 'new';
+        case 'PAYMENT_CONFIRMED': return 'paid';
+        case 'DELIVERED': return 'delivered';
+        case 'COMPLETED': return 'completed';
+        default: return '';
+    }
+}
+
+function getOrderActions(order) {
+    if (order.status === 'PENDING') {
+        return `<button class="btn btn-success btn-sm" onclick="acceptOrder(${order.id})">
+            <i class="bi bi-check"></i>
+        </button>`;
+    } else if (order.status === 'PAYMENT_CONFIRMED') {
+        return `<button class="btn btn-primary btn-sm" onclick="markAsDelivered(${order.id})">
+            <i class="bi bi-truck"></i>
+        </button>`;
+    }
+    return '';
+}
+
+async function acceptOrder(orderId) {
+    if (confirm('Accepter cette commande ?')) {
+        try {
+            await performTransactionAction(orderId, 'accept');
+        } catch (error) {
+            console.error('Erreur acceptation commande:', error);
+        }
+    }
+}
+</script>
+{% endblock %}

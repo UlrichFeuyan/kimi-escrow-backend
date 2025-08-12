@@ -1,0 +1,293 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Vérification téléphone - Kimi Escrow{% endblock %}
+
+{% block extra_css %}
+<style>
+    .verify-container {
+        max-width: 500px;
+        margin: 0 auto;
+        padding: 2rem 0;
+    }
+    
+    .verify-card {
+        border: none;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        border-radius: 1rem;
+    }
+    
+    .verify-header {
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        color: white;
+        text-align: center;
+        padding: 2rem;
+        border-radius: 1rem 1rem 0 0;
+    }
+    
+    .verify-icon {
+        width: 64px;
+        height: 64px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+        font-size: 2rem;
+    }
+    
+    .code-input {
+        font-size: 1.5rem;
+        text-align: center;
+        letter-spacing: 0.5rem;
+        font-weight: bold;
+        padding: 1rem;
+        border: 2px solid #dee2e6;
+        border-radius: 0.5rem;
+        transition: all 0.3s ease;
+    }
+    
+    .code-input:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        outline: none;
+    }
+    
+    .resend-btn {
+        color: #007bff;
+        text-decoration: none;
+        font-weight: 500;
+    }
+    
+    .resend-btn:hover {
+        text-decoration: underline;
+    }
+    
+    .countdown {
+        color: #6c757d;
+        font-size: 0.875rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="verify-container">
+        <div class="card verify-card">
+            <div class="verify-header">
+                <div class="verify-icon">
+                    <i class="bi bi-phone"></i>
+                </div>
+                <h4 class="mb-2">Vérification du téléphone</h4>
+                <p class="mb-0 opacity-75">
+                    Entrez le code reçu par SMS
+                </p>
+            </div>
+            
+            <div class="card-body p-4">
+                <div class="text-center mb-4">
+                    <p class="text-muted">
+                        Un code de vérification a été envoyé au numéro :
+                    </p>
+                    <strong class="fs-5">{{ user.phone_number }}</strong>
+                </div>
+                
+                <form method="post" class="needs-validation" novalidate>
+                    {% csrf_token %}
+                    
+                    <div class="mb-4">
+                        <label for="{{ form.verification_code.id_for_label }}" class="form-label visually-hidden">
+                            Code de vérification
+                        </label>
+                        <input type="text" 
+                               class="form-control code-input" 
+                               id="{{ form.verification_code.id_for_label }}"
+                               name="{{ form.verification_code.name }}"
+                               placeholder="000000"
+                               maxlength="6"
+                               required
+                               autocomplete="one-time-code">
+                        {% if form.verification_code.errors %}
+                            <div class="invalid-feedback d-block text-center mt-2">
+                                {{ form.verification_code.errors.0 }}
+                            </div>
+                        {% endif %}
+                        <div class="form-text text-center mt-2">
+                            Code à 6 chiffres
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid mb-3">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-check-circle me-2"></i>
+                            Vérifier le code
+                        </button>
+                    </div>
+                </form>
+                
+                <div class="text-center">
+                    <p class="mb-2">
+                        <small class="text-muted">Vous n'avez pas reçu le code ?</small>
+                    </p>
+                    
+                    <div id="resend-section">
+                        <a href="#" class="resend-btn" id="resend-link" onclick="resendCode()">
+                            Renvoyer le code
+                        </a>
+                        <div class="countdown d-none" id="countdown-timer">
+                            Nouveau code possible dans <span id="countdown-seconds">60</span>s
+                        </div>
+                    </div>
+                </div>
+                
+                <hr class="my-4">
+                
+                <div class="text-center">
+                    <h6 class="text-muted mb-2">Numéro incorrect ?</h6>
+                    <a href="{% url 'profile' %}" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-pencil me-1"></i>
+                        Modifier le numéro
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Instructions -->
+        <div class="card mt-4">
+            <div class="card-body">
+                <h6 class="card-title">
+                    <i class="bi bi-info-circle text-info me-2"></i>
+                    Problème de réception ?
+                </h6>
+                <ul class="list-unstyled mb-0 small">
+                    <li class="mb-1">• Vérifiez que votre téléphone a du réseau</li>
+                    <li class="mb-1">• Le SMS peut prendre quelques minutes</li>
+                    <li class="mb-1">• Vérifiez vos messages indésirables</li>
+                    <li class="mb-1">• Contactez le support si le problème persiste</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const codeInput = document.querySelector('.code-input');
+    const form = document.querySelector('.needs-validation');
+    
+    // Auto-submit when 6 digits are entered
+    codeInput.addEventListener('input', function() {
+        // Remove non-digits
+        this.value = this.value.replace(/\D/g, '');
+        
+        // Auto-submit when complete
+        if (this.value.length === 6) {
+            setTimeout(() => {
+                form.submit();
+            }, 500);
+        }
+    });
+    
+    // Focus on load
+    codeInput.focus();
+    
+    // Form validation
+    form.addEventListener('submit', function(event) {
+        if (!form.checkValidity()) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        form.classList.add('was-validated');
+    });
+    
+    // Initialize resend timer if needed
+    const lastSentTime = localStorage.getItem('lastCodeSent');
+    if (lastSentTime) {
+        const timeSince = Date.now() - parseInt(lastSentTime);
+        const remainingTime = 60000 - timeSince; // 60 seconds
+        
+        if (remainingTime > 0) {
+            startCountdown(Math.ceil(remainingTime / 1000));
+        }
+    }
+});
+
+function resendCode() {
+    // Show loading state
+    const resendLink = document.getElementById('resend-link');
+    const originalText = resendLink.textContent;
+    resendLink.textContent = 'Envoi en cours...';
+    resendLink.style.pointerEvents = 'none';
+    
+    // Simulate API call - replace with actual endpoint
+    fetch('{% url "verify_phone" %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ action: 'resend_code' })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast('Code renvoyé avec succès', 'success');
+            localStorage.setItem('lastCodeSent', Date.now().toString());
+            startCountdown(60);
+        } else {
+            showToast(data.message || 'Erreur lors du renvoi', 'error');
+            resendLink.textContent = originalText;
+            resendLink.style.pointerEvents = 'auto';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('Erreur de connexion', 'error');
+        resendLink.textContent = originalText;
+        resendLink.style.pointerEvents = 'auto';
+    });
+}
+
+function startCountdown(seconds) {
+    const resendLink = document.getElementById('resend-link');
+    const countdown = document.getElementById('countdown-timer');
+    const countdownSeconds = document.getElementById('countdown-seconds');
+    
+    resendLink.classList.add('d-none');
+    countdown.classList.remove('d-none');
+    
+    const timer = setInterval(() => {
+        seconds--;
+        countdownSeconds.textContent = seconds;
+        
+        if (seconds <= 0) {
+            clearInterval(timer);
+            resendLink.classList.remove('d-none');
+            resendLink.textContent = 'Renvoyer le code';
+            resendLink.style.pointerEvents = 'auto';
+            countdown.classList.add('d-none');
+        }
+    }, 1000);
+}
+
+function showToast(message, type) {
+    // Simple toast implementation
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type === 'success' ? 'success' : 'danger'} position-fixed top-0 start-50 translate-middle-x mt-3`;
+    toast.style.zIndex = '9999';
+    toast.innerHTML = `
+        <i class="bi bi-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
+        ${message}
+    `;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.remove();
+    }, 3000);
+}
+</script>
+{% endblock %}

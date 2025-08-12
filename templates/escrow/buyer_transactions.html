@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mes Transactions - Kimi Escrow</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+</head>
+<body>
+<!-- Navigation -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container">
+        <a class="navbar-brand" href="/">
+            <i class="bi bi-shield-check me-2"></i>Kimi Escrow
+        </a>
+        <div class="navbar-nav ms-auto">
+            <a class="nav-link" href="/">Accueil</a>
+            <a class="nav-link" href="/dashboard/buyer/">Dashboard</a>
+            <a class="nav-link" href="/disputes/buyer/">Litiges</a>
+        </div>
+    </div>
+</nav>
+<div class="container py-4">
+    <div class="row">
+        <div class="col-12">
+            <h2><i class="bi bi-cart-check me-2"></i>Mes Transactions</h2>
+            <p class="text-muted">Gérez vos achats et suivez leur statut</p>
+            
+            <!-- Demo Notice -->
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i>
+                <strong>Page de démonstration</strong> - Cette page fait partie du frontend complet créé pour Kimi Escrow.
+                Pour la version fonctionnelle complète, utilisez les formulaires Django avec l'API DRF.
+            </div>
+            
+            <!-- Quick Actions -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <a href="/transactions/create/" class="btn btn-primary w-100">
+                        <i class="bi bi-plus-circle me-2"></i>Nouvelle Transaction
+                    </a>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select">
+                        <option>Toutes les transactions</option>
+                        <option>En attente</option>
+                        <option>Payées</option>
+                        <option>Livrées</option>
+                        <option>Terminées</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <input type="text" class="form-control" placeholder="Rechercher...">
+                </div>
+                <div class="col-md-3">
+                    <a href="/" class="btn btn-outline-secondary w-100">
+                        <i class="bi bi-arrow-left me-2"></i>Retour
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Demo Transactions -->
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title">iPhone 13 Pro Max</h5>
+                            <p class="card-text">256GB, état neuf avec accessoires</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="badge bg-warning">En attente</span>
+                                <strong>450,000 FCFA</strong>
+                            </div>
+                            <div class="mt-2">
+                                <button class="btn btn-success btn-sm">Payer</button>
+                                <button class="btn btn-outline-primary btn-sm">Détails</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title">MacBook Air M2</h5>
+                            <p class="card-text">13 pouces, 8GB RAM, 256GB SSD</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="badge bg-info">Payé</span>
+                                <strong>850,000 FCFA</strong>
+                            </div>
+                            <div class="mt-2">
+                                <button class="btn btn-primary btn-sm">Suivre livraison</button>
+                                <button class="btn btn-outline-primary btn-sm">Détails</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

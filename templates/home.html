@@ -1,0 +1,264 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Kimi Escrow - Plateforme sécurisée de transactions{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero-section {
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        color: white;
+        padding: 100px 0;
+    }
+    
+    .feature-icon {
+        width: 80px;
+        height: 80px;
+        background: rgba(0, 123, 255, 0.1);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+    }
+    
+    .stats-counter {
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: #007bff;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h1 class="display-4 fw-bold mb-4">
+                    Achetez et vendez en toute sécurité au Cameroun
+                </h1>
+                <p class="lead mb-4">
+                    Kimi Escrow protège vos transactions avec un service d'entiercement sécurisé. 
+                    Payez en Mobile Money et recevez votre argent uniquement après livraison.
+                </p>
+                <div class="d-flex gap-3">
+                    <a href="{% url 'register' %}" class="btn btn-light btn-lg">
+                        <i class="bi bi-person-plus me-2"></i>Commencer
+                    </a>
+                    <a href="#features" class="btn btn-outline-light btn-lg">
+                        <i class="bi bi-play-circle me-2"></i>En savoir plus
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-6 text-center">
+                <img src="{% static 'images/hero-illustration.svg' %}" alt="Kimi Escrow" class="img-fluid" style="max-height: 400px;">
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section id="features" class="py-5">
+    <div class="container">
+        <div class="row text-center mb-5">
+            <div class="col-lg-8 mx-auto">
+                <h2 class="display-5 fw-bold mb-3">Pourquoi choisir Kimi Escrow?</h2>
+                <p class="lead text-muted">
+                    Une plateforme conçue pour sécuriser vos transactions et protéger acheteurs et vendeurs.
+                </p>
+            </div>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="text-center">
+                    <div class="feature-icon">
+                        <i class="bi bi-shield-check text-primary" style="font-size: 2rem;"></i>
+                    </div>
+                    <h4>Sécurité maximale</h4>
+                    <p class="text-muted">
+                        Vos fonds sont protégés jusqu'à la livraison confirmée. 
+                        Vérification KYC avec Smile ID pour plus de sécurité.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="text-center">
+                    <div class="feature-icon">
+                        <i class="bi bi-phone text-primary" style="font-size: 2rem;"></i>
+                    </div>
+                    <h4>Mobile Money intégré</h4>
+                    <p class="text-muted">
+                        Payez facilement avec MTN Mobile Money ou Orange Money. 
+                        Pas besoin de carte bancaire.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="text-center">
+                    <div class="feature-icon">
+                        <i class="bi bi-scales text-primary" style="font-size: 2rem;"></i>
+                    </div>
+                    <h4>Arbitrage équitable</h4>
+                    <p class="text-muted">
+                        En cas de litige, nos arbitres experts vous aident à 
+                        trouver une solution juste et équitable.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How it works -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="row text-center mb-5">
+            <div class="col-lg-8 mx-auto">
+                <h2 class="display-5 fw-bold mb-3">Comment ça marche?</h2>
+                <p class="lead text-muted">
+                    Trois étapes simples pour des transactions sécurisées.
+                </p>
+            </div>
+        </div>
+        
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body text-center p-4">
+                        <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                            <span class="fw-bold">1</span>
+                        </div>
+                        <h5>Créer la transaction</h5>
+                        <p class="text-muted">
+                            L'acheteur crée une transaction avec les détails 
+                            du produit et le numéro du vendeur.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body text-center p-4">
+                        <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                            <span class="fw-bold">2</span>
+                        </div>
+                        <h5>Payer en sécurité</h5>
+                        <p class="text-muted">
+                            L'argent est bloqué sur notre plateforme. 
+                            Le vendeur peut alors procéder à la livraison.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body text-center p-4">
+                        <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                            <span class="fw-bold">3</span>
+                        </div>
+                        <h5>Confirmer et recevoir</h5>
+                        <p class="text-muted">
+                            Après confirmation de la livraison, 
+                            l'argent est libéré au vendeur.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Statistics -->
+<section class="py-5">
+    <div class="container">
+        <div class="row text-center">
+            <div class="col-md-3 mb-4">
+                <div class="stats-counter">1,234+</div>
+                <p class="text-muted">Transactions sécurisées</p>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="stats-counter">98%</div>
+                <p class="text-muted">Taux de satisfaction</p>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="stats-counter">500M+</div>
+                <p class="text-muted">FCFA transférés</p>
+            </div>
+            <div class="col-md-3 mb-4">
+                <div class="stats-counter">24/7</div>
+                <p class="text-muted">Support client</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="py-5 bg-primary text-white">
+    <div class="container text-center">
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                <h2 class="display-5 fw-bold mb-3">Prêt à commencer?</h2>
+                <p class="lead mb-4">
+                    Rejoignez des milliers d'utilisateurs qui font confiance à Kimi Escrow 
+                    pour leurs transactions en ligne.
+                </p>
+                <div class="d-flex justify-content-center gap-3">
+                    <a href="{% url 'register' %}" class="btn btn-light btn-lg">
+                        <i class="bi bi-person-plus me-2"></i>Créer un compte
+                    </a>
+                    <a href="#" class="btn btn-outline-light btn-lg">
+                        <i class="bi bi-telephone me-2"></i>Nous contacter
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Animation des compteurs
+document.addEventListener('DOMContentLoaded', function() {
+    const counters = document.querySelectorAll('.stats-counter');
+    
+    const animateCounter = (counter) => {
+        const target = parseInt(counter.textContent.replace(/[^\d]/g, ''));
+        const duration = 2000;
+        const step = target / (duration / 16);
+        let current = 0;
+        
+        const timer = setInterval(() => {
+            current += step;
+            if (current >= target) {
+                counter.textContent = counter.textContent.replace(/[\d,]+/, target.toLocaleString());
+                clearInterval(timer);
+            } else {
+                counter.textContent = counter.textContent.replace(/[\d,]+/, Math.floor(current).toLocaleString());
+            }
+        }, 16);
+    };
+    
+    // Observer pour déclencher l'animation quand la section est visible
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                counters.forEach(counter => animateCounter(counter));
+                observer.disconnect();
+            }
+        });
+    });
+    
+    if (counters.length > 0) {
+        observer.observe(counters[0].closest('section'));
+    }
+});
+</script>
+{% endblock %}

@@ -89,3 +89,4 @@ class DisputeResolutionSerializer(serializers.ModelSerializer):
             'respondent_satisfied', 'created_at'
         ]
         read_only_fields = ['id', 'created_at']
+

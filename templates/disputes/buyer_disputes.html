@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Mes Litiges - Kimi Escrow{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-12">
+            <h2><i class="bi bi-exclamation-triangle me-2"></i>Mes Litiges</h2>
+            <p class="text-muted">Gérez vos litiges et suivez leur résolution</p>
+            
+            <!-- Info -->
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i>
+                <strong>Système de Litiges</strong> - En cas de problème avec une transaction, 
+                notre équipe d'arbitres vous aide à trouver une solution équitable.
+            </div>
+            
+            <!-- Quick Stats -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h3 class="text-warning">1</h3>
+                            <small>Litige ouvert</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h3 class="text-info">0</h3>
+                            <small>En arbitrage</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card text-center">
+                        <div class="card-body">
+                            <h3 class="text-success">2</h3>
+                            <small>Résolus</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <a href="/" class="btn btn-outline-secondary w-100 h-100 d-flex align-items-center justify-content-center">
+                        <i class="bi bi-arrow-left me-2"></i>Retour
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Active Disputes -->
+            <h5>Litiges Actifs</h5>
+            <div class="card mb-4 border-warning">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h6 class="card-title mb-1">Litige #001 - iPhone 13 Pro Max</h6>
+                            <p class="card-text text-muted mb-2">
+                                <strong>Motif:</strong> Produit non conforme à la description
+                            </p>
+                            <p class="card-text small">
+                                L'iPhone reçu présente des rayures importantes non mentionnées dans l'annonce.
+                            </p>
+                            <div class="d-flex align-items-center">
+                                <span class="badge bg-warning me-2">Ouvert</span>
+                                <small class="text-muted">Créé le 10 août 2024</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <h5 class="text-danger mb-2">150,000 FCFA</h5>
+                            <div class="btn-group">
+                                <button class="btn btn-outline-primary btn-sm">Voir détails</button>
+                                <button class="btn btn-outline-success btn-sm">Ajouter preuve</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Resolved Disputes -->
+            <h5>Litiges Résolus</h5>
+            <div class="card mb-3 border-success">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h6 class="card-title mb-1">Litige #002 - MacBook Air</h6>
+                            <p class="card-text text-muted mb-2">
+                                <strong>Motif:</strong> Livraison en retard
+                            </p>
+                            <div class="d-flex align-items-center">
+                                <span class="badge bg-success me-2">Résolu - Remboursement partiel</span>
+                                <small class="text-muted">Résolu le 5 août 2024</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <h6 class="text-success mb-2">50,000 FCFA remboursés</h6>
+                            <button class="btn btn-outline-primary btn-sm">Voir détails</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mb-3 border-success">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h6 class="card-title mb-1">Litige #003 - Samsung Galaxy</h6>
+                            <p class="card-text text-muted mb-2">
+                                <strong>Motif:</strong> Produit défectueux
+                            </p>
+                            <div class="d-flex align-items-center">
+                                <span class="badge bg-success me-2">Résolu - Remboursement complet</span>
+                                <small class="text-muted">Résolu le 1er août 2024</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <h6 class="text-success mb-2">300,000 FCFA remboursés</h6>
+                            <button class="btn btn-outline-primary btn-sm">Voir détails</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Create Dispute -->
+            <div class="text-center mt-4">
+                <button class="btn btn-warning">
+                    <i class="bi bi-plus-circle me-2"></i>Créer un nouveau litige
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

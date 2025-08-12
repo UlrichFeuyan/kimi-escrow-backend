@@ -1,0 +1,505 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Inscription - Kimi Escrow{% endblock %}
+
+{% block extra_css %}
+<style>
+    .auth-container {
+        min-height: 80vh;
+        display: flex;
+        align-items: center;
+        padding: 2rem 0;
+    }
+    
+    .auth-card {
+        max-width: 550px;
+        margin: 0 auto;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+    
+    .auth-header {
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        color: white;
+        text-align: center;
+        padding: 2rem 1.5rem 1.5rem;
+        border-radius: 0.375rem 0.375rem 0 0;
+    }
+    
+    .auth-body {
+        padding: 2rem 1.5rem;
+    }
+    
+    .form-floating .form-control {
+        height: calc(3.5rem + 2px);
+    }
+    
+    .password-strength {
+        margin-top: 0.5rem;
+    }
+    
+    .strength-meter {
+        height: 4px;
+        background-color: #e9ecef;
+        border-radius: 2px;
+        overflow: hidden;
+    }
+    
+    .strength-meter-fill {
+        height: 100%;
+        transition: all 0.3s ease;
+        border-radius: 2px;
+    }
+    
+    .strength-weak { background-color: #dc3545; width: 25%; }
+    .strength-fair { background-color: #fd7e14; width: 50%; }
+    .strength-good { background-color: #ffc107; width: 75%; }
+    .strength-strong { background-color: #28a745; width: 100%; }
+    
+    .role-selector {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .role-option {
+        border: 2px solid #e9ecef;
+        border-radius: 0.375rem;
+        padding: 1.5rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background: white;
+    }
+    
+    .role-option:hover {
+        border-color: #007bff;
+        background-color: rgba(0, 123, 255, 0.05);
+    }
+    
+    .role-option.selected {
+        border-color: #007bff;
+        background-color: rgba(0, 123, 255, 0.1);
+    }
+    
+    .role-option input[type="radio"] {
+        display: none;
+    }
+    
+    .role-icon {
+        font-size: 2rem;
+        color: #007bff;
+        margin-bottom: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-7">
+                <div class="card auth-card border-0">
+                    <!-- Header -->
+                    <div class="auth-header">
+                        <i class="bi bi-person-plus display-4 mb-3"></i>
+                        <h3 class="fw-bold mb-2">Créer votre compte</h3>
+                        <p class="mb-0 opacity-75">Rejoignez la communauté Kimi Escrow</p>
+                    </div>
+                    
+                    <!-- Body -->
+                    <div class="auth-body">
+                        <form method="post" class="needs-validation" novalidate>
+                            {% csrf_token %}
+                            
+                            <!-- Role Selection -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">{{ form.role.label }}</label>
+                                <div class="role-selector">
+                                    <div class="role-option" onclick="selectRole('BUYER')">
+                                        <div class="role-icon">
+                                            <i class="bi bi-cart-check"></i>
+                                        </div>
+                                        <h6 class="fw-bold">Acheter</h6>
+                                        <small class="text-muted">Je veux acheter des produits en sécurité</small>
+                                        <input type="radio" name="{{ form.role.name }}" value="BUYER" id="role_buyer">
+                                    </div>
+                                    <div class="role-option" onclick="selectRole('SELLER')">
+                                        <div class="role-icon">
+                                            <i class="bi bi-shop"></i>
+                                        </div>
+                                        <h6 class="fw-bold">Vendre</h6>
+                                        <small class="text-muted">Je veux vendre mes produits en sécurité</small>
+                                        <input type="radio" name="{{ form.role.name }}" value="SELLER" id="role_seller">
+                                    </div>
+                                </div>
+                                {% if form.role.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.role.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Personal Info -->
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-6">
+                                    <div class="form-floating">
+                                        {{ form.first_name }}
+                                        <label for="{{ form.first_name.id_for_label }}">
+                                            <i class="bi bi-person me-2"></i>{{ form.first_name.label }}
+                                        </label>
+                                        {% if form.first_name.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {{ form.first_name.errors.0 }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-floating">
+                                        {{ form.last_name }}
+                                        <label for="{{ form.last_name.id_for_label }}">
+                                            <i class="bi bi-person me-2"></i>{{ form.last_name.label }}
+                                        </label>
+                                        {% if form.last_name.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {{ form.last_name.errors.0 }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Phone Number -->
+                            <div class="form-floating mb-3">
+                                {{ form.phone_number }}
+                                <label for="{{ form.phone_number.id_for_label }}">
+                                    <i class="bi bi-telephone me-2"></i>{{ form.phone_number.label }}
+                                </label>
+                                <div class="form-text">{{ form.phone_number.help_text }}</div>
+                                {% if form.phone_number.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.phone_number.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Password -->
+                            <div class="form-floating mb-3">
+                                {{ form.password1 }}
+                                <label for="{{ form.password1.id_for_label }}">
+                                    <i class="bi bi-lock me-2"></i>{{ form.password1.label }}
+                                </label>
+                                <div class="password-toggle">
+                                    <button type="button" class="btn btn-link position-absolute end-0 top-50 translate-middle-y me-3" 
+                                            onclick="togglePassword('{{ form.password1.id_for_label }}', 'password1-toggle-icon')">
+                                        <i class="bi bi-eye" id="password1-toggle-icon"></i>
+                                    </button>
+                                </div>
+                                <div class="password-strength">
+                                    <div class="strength-meter">
+                                        <div class="strength-meter-fill" id="strength-meter"></div>
+                                    </div>
+                                    <small class="text-muted" id="strength-text">{{ form.password1.help_text }}</small>
+                                </div>
+                                {% if form.password1.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.password1.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Confirm Password -->
+                            <div class="form-floating mb-3">
+                                {{ form.password2 }}
+                                <label for="{{ form.password2.id_for_label }}">
+                                    <i class="bi bi-lock-fill me-2"></i>{{ form.password2.label }}
+                                </label>
+                                <div class="password-toggle">
+                                    <button type="button" class="btn btn-link position-absolute end-0 top-50 translate-middle-y me-3" 
+                                            onclick="togglePassword('{{ form.password2.id_for_label }}', 'password2-toggle-icon')">
+                                        <i class="bi bi-eye" id="password2-toggle-icon"></i>
+                                    </button>
+                                </div>
+                                {% if form.password2.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.password2.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Terms Acceptance -->
+                            <div class="form-check mb-4">
+                                {{ form.terms_accepted }}
+                                <label class="form-check-label" for="{{ form.terms_accepted.id_for_label }}">
+                                    {{ form.terms_accepted.label }}
+                                    <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#termsModal">
+                                        conditions d'utilisation
+                                    </a>
+                                    et la 
+                                    <a href="#" class="text-decoration-none" data-bs-toggle="modal" data-bs-target="#privacyModal">
+                                        politique de confidentialité
+                                    </a>
+                                </label>
+                                {% if form.terms_accepted.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.terms_accepted.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Non-field errors -->
+                            {% if form.non_field_errors %}
+                                <div class="alert alert-danger">
+                                    <i class="bi bi-exclamation-triangle me-2"></i>
+                                    {{ form.non_field_errors.0 }}
+                                </div>
+                            {% endif %}
+                            
+                            <!-- Submit Button -->
+                            <button type="submit" class="btn btn-primary w-100 py-3 fw-bold">
+                                <i class="bi bi-person-plus me-2"></i>
+                                Créer mon compte
+                            </button>
+                        </form>
+                        
+                        <!-- Sign in link -->
+                        <div class="text-center mt-4">
+                            <p class="text-muted mb-0">
+                                Déjà un compte ?
+                                <a href="{% url 'login' %}" class="text-decoration-none fw-bold">
+                                    Se connecter
+                                </a>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Trust indicators -->
+                <div class="text-center mt-4">
+                    <div class="row g-3 text-muted small">
+                        <div class="col-md-4">
+                            <i class="bi bi-shield-check me-1"></i>
+                            Données sécurisées
+                        </div>
+                        <div class="col-md-4">
+                            <i class="bi bi-telephone me-1"></i>
+                            Vérification SMS
+                        </div>
+                        <div class="col-md-4">
+                            <i class="bi bi-bank me-1"></i>
+                            Conforme CEMAC
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Terms Modal -->
+<div class="modal fade" id="termsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Conditions d'utilisation</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>En utilisant Kimi Escrow, vous acceptez les conditions suivantes...</p>
+                <p><strong>1. Service d'entiercement</strong></p>
+                <p>Kimi Escrow fournit un service d'entiercement pour sécuriser les transactions entre acheteurs et vendeurs.</p>
+                <!-- Add more terms content -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Privacy Modal -->
+<div class="modal fade" id="privacyModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Politique de confidentialité</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Cette politique explique comment nous collectons et utilisons vos données...</p>
+                <p><strong>1. Collecte des données</strong></p>
+                <p>Nous collectons uniquement les données nécessaires au fonctionnement du service.</p>
+                <!-- Add more privacy content -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Role selection
+function selectRole(role) {
+    // Remove selected class from all options
+    document.querySelectorAll('.role-option').forEach(option => {
+        option.classList.remove('selected');
+    });
+    
+    // Add selected class to clicked option
+    event.currentTarget.classList.add('selected');
+    
+    // Check the radio button
+    document.getElementById('role_' + role.toLowerCase()).checked = true;
+}
+
+// Toggle password visibility
+function togglePassword(fieldId, iconId) {
+    const passwordField = document.getElementById(fieldId);
+    const toggleIcon = document.getElementById(iconId);
+    
+    if (passwordField.type === 'password') {
+        passwordField.type = 'text';
+        toggleIcon.className = 'bi bi-eye-slash';
+    } else {
+        passwordField.type = 'password';
+        toggleIcon.className = 'bi bi-eye';
+    }
+}
+
+// Password strength checker
+function checkPasswordStrength(password) {
+    let score = 0;
+    let feedback = [];
+    
+    // Length check
+    if (password.length >= 8) score++;
+    else feedback.push('au moins 8 caractères');
+    
+    // Uppercase check
+    if (/[A-Z]/.test(password)) score++;
+    else feedback.push('une majuscule');
+    
+    // Lowercase check
+    if (/[a-z]/.test(password)) score++;
+    else feedback.push('une minuscule');
+    
+    // Number check
+    if (/\d/.test(password)) score++;
+    else feedback.push('un chiffre');
+    
+    // Special character check
+    if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) score++;
+    
+    return { score, feedback };
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('.needs-validation');
+    const password1Field = document.getElementById('{{ form.password1.id_for_label }}');
+    const password2Field = document.getElementById('{{ form.password2.id_for_label }}');
+    const strengthMeter = document.getElementById('strength-meter');
+    const strengthText = document.getElementById('strength-text');
+    
+    // Phone number formatting
+    const phoneInput = document.getElementById('{{ form.phone_number.id_for_label }}');
+    if (phoneInput) {
+        phoneInput.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            
+            // Auto-add +237 if user starts typing numbers
+            if (value.length > 0 && !value.startsWith('237')) {
+                if (value.length === 9) {
+                    value = '237' + value;
+                }
+            }
+            
+            // Format as +237XXXXXXXXX
+            if (value.startsWith('237') && value.length >= 3) {
+                value = '+237' + value.substring(3);
+            }
+            
+            e.target.value = value;
+        });
+    }
+    
+    // Password strength indicator
+    if (password1Field && strengthMeter && strengthText) {
+        password1Field.addEventListener('input', function() {
+            const password = this.value;
+            const result = checkPasswordStrength(password);
+            
+            // Update strength meter
+            strengthMeter.className = 'strength-meter-fill';
+            
+            if (result.score <= 1) {
+                strengthMeter.classList.add('strength-weak');
+                strengthText.textContent = 'Faible';
+                strengthText.className = 'text-danger small';
+            } else if (result.score <= 2) {
+                strengthMeter.classList.add('strength-fair');
+                strengthText.textContent = 'Moyen';
+                strengthText.className = 'text-warning small';
+            } else if (result.score <= 3) {
+                strengthMeter.classList.add('strength-good');
+                strengthText.textContent = 'Bon';
+                strengthText.className = 'text-info small';
+            } else {
+                strengthMeter.classList.add('strength-strong');
+                strengthText.textContent = 'Excellent';
+                strengthText.className = 'text-success small';
+            }
+            
+            if (result.feedback.length > 0 && password.length > 0) {
+                strengthText.textContent += ` (Manque: ${result.feedback.join(', ')})`;
+            }
+        });
+    }
+    
+    // Password confirmation check
+    if (password2Field) {
+        password2Field.addEventListener('input', function() {
+            const password1 = password1Field.value;
+            const password2 = this.value;
+            
+            if (password2.length > 0) {
+                if (password1 === password2) {
+                    this.classList.remove('is-invalid');
+                    this.classList.add('is-valid');
+                } else {
+                    this.classList.remove('is-valid');
+                    this.classList.add('is-invalid');
+                }
+            } else {
+                this.classList.remove('is-valid', 'is-invalid');
+            }
+        });
+    }
+    
+    // Form validation
+    if (form) {
+        form.addEventListener('submit', function(event) {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            
+            form.classList.add('was-validated');
+        });
+    }
+    
+    // Show loading state on submit
+    form.addEventListener('submit', function() {
+        const submitBtn = form.querySelector('button[type="submit"]');
+        if (submitBtn && form.checkValidity()) {
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Création du compte...';
+            submitBtn.disabled = true;
+        }
+    });
+});
+</script>
+{% endblock %}

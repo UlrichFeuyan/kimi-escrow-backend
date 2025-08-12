@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kimi Escrow - Frontend</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container py-5">
+        <div class="text-center">
+            <h1 class="display-4 text-primary mb-4">🎉 Frontend Kimi Escrow</h1>
+            <p class="lead">Le frontend Django est maintenant opérationnel !</p>
+            <!-- Frontend Access -->
+            <div class="row mt-5">
+                <div class="col-12 mb-4">
+                    <h3>🎨 Accéder au Frontend Complet</h3>
+                    <p class="text-muted">Explorez toutes les interfaces créées pour Kimi Escrow</p>
+                </div>
+                
+                <!-- Authentification -->
+                <div class="col-md-6 col-lg-3 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body text-center">
+                            <i class="display-4 text-primary">🔐</i>
+                            <h5 class="card-title mt-3">Authentification</h5>
+                            <p class="card-text">Connexion et inscription sécurisées</p>
+                            <div class="d-grid gap-2">
+                                <a href="/login/" class="btn btn-outline-primary btn-sm">Se connecter</a>
+                                <a href="/register/" class="btn btn-outline-success btn-sm">S'inscrire</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Dashboard Acheteur -->
+                <div class="col-md-6 col-lg-3 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body text-center">
+                            <i class="display-4 text-success">🛒</i>
+                            <h5 class="card-title mt-3">Acheteur</h5>
+                            <p class="card-text">Créer des transactions, payer en sécurité</p>
+                            <div class="d-grid gap-2">
+                                <a href="/dashboard/buyer/" class="btn btn-success btn-sm">Dashboard</a>
+                                <a href="/transactions/create/" class="btn btn-outline-success btn-sm">Nouvelle transaction</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Dashboard Vendeur -->
+                <div class="col-md-6 col-lg-3 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body text-center">
+                            <i class="display-4 text-info">🏪</i>
+                            <h5 class="card-title mt-3">Vendeur</h5>
+                            <p class="card-text">Gérer vos ventes et livraisons</p>
+                            <div class="d-grid gap-2">
+                                <a href="/dashboard/seller/" class="btn btn-info btn-sm">Dashboard</a>
+                                <a href="/transactions/seller/" class="btn btn-outline-info btn-sm">Mes ventes</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Dashboard Admin -->
+                <div class="col-md-6 col-lg-3 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body text-center">
+                            <i class="display-4 text-danger">👨‍💼</i>
+                            <h5 class="card-title mt-3">Administration</h5>
+                            <p class="card-text">Gestion complète du système</p>
+                            <div class="d-grid gap-2">
+                                <a href="/dashboard/admin/" class="btn btn-danger btn-sm">Dashboard Admin</a>
+                                <a href="/admin/" class="btn btn-outline-danger btn-sm">Django Admin</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Fonctionnalités principales -->
+            <div class="row mt-5">
+                <div class="col-12 mb-4">
+                    <h3>⚡ Fonctionnalités Principales</h3>
+                </div>
+                
+                <div class="col-md-4 mb-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">💳 Transactions Escrow</h5>
+                            <p class="card-text">Paiements sécurisés avec Mobile Money</p>
+                            <a href="/transactions/buyer/" class="btn btn-primary">Voir transactions</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4 mb-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">⚖️ Système de Litiges</h5>
+                            <p class="card-text">Résolution équitable des conflits</p>
+                            <a href="/disputes/buyer/" class="btn btn-warning">Mes litiges</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4 mb-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">🛡️ Vérification KYC</h5>
+                            <p class="card-text">Sécurité et conformité</p>
+                            <a href="/kyc/status/" class="btn btn-info">Statut KYC</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- API et Documentation -->
+            <div class="row mt-5">
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">📱 Frontend Web</h5>
+                            <p class="card-text">Interface utilisateur avec Django Templates</p>
+                            <span class="badge bg-success">✅ Actif</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">🔧 API Backend</h5>
+                            <p class="card-text">API REST Django DRF</p>
+                            <a href="/swagger/" class="btn btn-primary">Documentation API</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">⚙️ Administration</h5>
+                            <p class="card-text">Interface d'administration Django</p>
+                            <a href="/admin/" class="btn btn-secondary">Django Admin</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-5">
+                <h3>🚀 Prochaines étapes</h3>
+                <ol class="list-unstyled">
+                    <li>✅ Frontend configuré et accessible</li>
+                    <li>📝 Créer des utilisateurs de test</li>
+                    <li>🎨 Tester les interfaces par rôle</li>
+                    <li>🔐 Configurer l'authentification</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

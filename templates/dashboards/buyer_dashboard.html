@@ -1,0 +1,435 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard Acheteur - Kimi Escrow{% endblock %}
+
+{% block extra_css %}
+<style>
+    .dashboard-header {
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        color: white;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+    }
+
+    .stats-card {
+        transition: all 0.3s ease;
+        border-left: 4px solid transparent;
+    }
+    
+    .stats-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+    }
+    
+    .stats-card.primary { border-left-color: #007bff; }
+    .stats-card.success { border-left-color: #28a745; }
+    .stats-card.warning { border-left-color: #ffc107; }
+    .stats-card.info { border-left-color: #17a2b8; }
+    
+    .quick-action-btn {
+        border: 2px dashed #dee2e6;
+        color: #6c757d;
+        transition: all 0.3s ease;
+        min-height: 120px;
+    }
+    
+    .quick-action-btn:hover {
+        border-color: #007bff;
+        color: #007bff;
+        background-color: rgba(0, 123, 255, 0.05);
+    }
+    
+    .transaction-card {
+        transition: all 0.3s ease;
+        border: 1px solid #e9ecef;
+    }
+    
+    .transaction-card:hover {
+        box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1);
+        border-color: #007bff;
+    }
+    
+    .activity-timeline .timeline-item {
+        position: relative;
+        padding-left: 2rem;
+        padding-bottom: 1.5rem;
+    }
+    
+    .activity-timeline .timeline-item:before {
+        content: '';
+        position: absolute;
+        left: 0.5rem;
+        top: 0.5rem;
+        width: 8px;
+        height: 8px;
+        background-color: #007bff;
+        border-radius: 50%;
+        transform: translateX(-50%);
+    }
+    
+    .activity-timeline .timeline-item:after {
+        content: '';
+        position: absolute;
+        left: 0.5rem;
+        top: 1rem;
+        width: 1px;
+        height: calc(100% - 0.5rem);
+        background-color: #e9ecef;
+        transform: translateX(-50%);
+    }
+    
+    .activity-timeline .timeline-item:last-child:after {
+        display: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Dashboard Header -->
+<div class="dashboard-header">
+    <div class="container">
+        <div class="row align-items-center">
+                            <div class="col-md-8">
+                    <h1 class="mb-2">
+                        <i class="bi bi-speedometer2 me-3"></i>
+                        Dashboard Acheteur
+                    </h1>
+                    <p class="mb-0 opacity-75">
+                        Gérez vos achats et transactions en toute sécurité
+                    </p>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <div class="d-flex align-items-center justify-content-md-end">
+                        <span class="badge bg-success px-3 py-2">
+                            <i class="bi bi-shield-check me-1"></i>KYC Vérifié
+                        </span>
+                    </div>
+                </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Statistics Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="card stats-card primary h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="stats-icon primary me-3">
+                            <i class="bi bi-cart-check"></i>
+                        </div>
+                        <div>
+                            <h3 class="mb-0">5</h3>
+                            <p class="text-muted mb-0">Mes achats</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card stats-card success h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="stats-icon success me-3">
+                            <i class="bi bi-check-circle"></i>
+                        </div>
+                        <div>
+                            <h3 class="mb-0">3</h3>
+                            <p class="text-muted mb-0">Terminés</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card stats-card warning h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="stats-icon warning me-3">
+                            <i class="bi bi-clock"></i>
+                        </div>
+                        <div>
+                            <h3 class="mb-0">2</h3>
+                            <p class="text-muted mb-0">En cours</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card stats-card info h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="stats-icon info me-3">
+                            <i class="bi bi-cash"></i>
+                        </div>
+                        <div>
+                            <h3 class="mb-0">1,250,000</h3>
+                            <p class="text-muted mb-0">Total dépensé (FCFA)</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="row g-4 mb-4">
+        <div class="col-12">
+            <h5 class="mb-3">Actions rapides</h5>
+        </div>
+        
+        <div class="col-md-3">
+            <a href="{% url 'transaction_create' %}" class="btn quick-action-btn w-100 d-flex flex-column align-items-center justify-content-center">
+                <i class="bi bi-plus-circle display-6 mb-2"></i>
+                <span class="fw-bold">Nouvelle transaction</span>
+                <small>Créer un achat sécurisé</small>
+            </a>
+        </div>
+        
+        <div class="col-md-3">
+            <a href="{% url 'buyer_transactions' %}" class="btn quick-action-btn w-100 d-flex flex-column align-items-center justify-content-center">
+                <i class="bi bi-list-ul display-6 mb-2"></i>
+                <span class="fw-bold">Mes transactions</span>
+                <small>Voir tous mes achats</small>
+            </a>
+        </div>
+        
+        <div class="col-md-3">
+            <a href="{% url 'payment_history' %}" class="btn quick-action-btn w-100 d-flex flex-column align-items-center justify-content-center">
+                <i class="bi bi-credit-card display-6 mb-2"></i>
+                <span class="fw-bold">Mes paiements</span>
+                <small>Historique des paiements</small>
+            </a>
+        </div>
+        
+        <div class="col-md-3">
+            <a href="{% url 'buyer_disputes' %}" class="btn quick-action-btn w-100 d-flex flex-column align-items-center justify-content-center">
+                <i class="bi bi-exclamation-triangle display-6 mb-2"></i>
+                <span class="fw-bold">Mes litiges</span>
+                <small>Gérer les litiges</small>
+            </a>
+        </div>
+    </div>
+    
+    <div class="row g-4">
+        <!-- Recent Transactions -->
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-clock-history me-2"></i>
+                        Transactions récentes
+                    </h5>
+                    <a href="{% url 'buyer_transactions' %}" class="btn btn-outline-primary btn-sm">
+                        Voir tout
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if recent_transactions %}
+                        <div id="transactions-list">
+                            <!-- Les transactions seront chargées ici via JavaScript -->
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="bi bi-inbox display-1 text-muted"></i>
+                            <h5 class="mt-3">Aucune transaction</h5>
+                            <p class="text-muted">Vous n'avez pas encore effectué d'achats.</p>
+                            <a href="{% url 'transaction_create' %}" class="btn btn-primary">
+                                <i class="bi bi-plus-circle me-2"></i>Créer ma première transaction
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Activity Feed & Tips -->
+        <div class="col-lg-4">
+            <!-- Activity Timeline -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-activity me-2"></i>
+                        Activité récente
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="activity-timeline">
+                        <div class="timeline-item">
+                            <div class="d-flex justify-content-between">
+                                <small class="text-muted">Il y a 2h</small>
+                            </div>
+                            <p class="mb-0">Connexion au compte</p>
+                        </div>
+                        
+                        <div class="timeline-item">
+                            <div class="d-flex justify-content-between">
+                                <small class="text-muted">Hier</small>
+                            </div>
+                            <p class="mb-0">Transaction #1234 terminée</p>
+                        </div>
+                        
+                        <div class="timeline-item">
+                            <div class="d-flex justify-content-between">
+                                <small class="text-muted">Il y a 3 jours</small>
+                            </div>
+                            <p class="mb-0">Paiement effectué - 150,000 FCFA</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Tips & Security -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-lightbulb me-2"></i>
+                        Conseils de sécurité
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="d-flex align-items-start">
+                            <i class="bi bi-shield-check text-success me-2 mt-1"></i>
+                            <small>
+                                Vérifiez toujours l'identité du vendeur avant d'effectuer un paiement.
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="d-flex align-items-start">
+                            <i class="bi bi-eye text-info me-2 mt-1"></i>
+                            <small>
+                                Lisez attentivement la description du produit avant d'acheter.
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="d-flex align-items-start">
+                            <i class="bi bi-chat-dots text-warning me-2 mt-1"></i>
+                            <small>
+                                Utilisez la messagerie intégrée pour communiquer avec le vendeur.
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-0">
+                        <div class="d-flex align-items-start">
+                            <i class="bi bi-telephone text-primary me-2 mt-1"></i>
+                            <small>
+                                Contactez le support en cas de problème : +237 6XX XXX XXX
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Charger les transactions récentes
+    loadTransactions();
+    
+    // Mettre à jour les notifications
+    if (KimiEscrow.currentUser?.isAuthenticated) {
+        loadNotifications();
+    }
+});
+
+// Charger et afficher les transactions récentes
+async function loadTransactions() {
+    try {
+        const response = await apiRequest('/api/escrow/transactions/', {
+            limit: 5,
+            ordering: '-created_at'
+        });
+        
+        if (response.success && response.data.results.length > 0) {
+            displayRecentTransactions(response.data.results);
+        }
+    } catch (error) {
+        console.error('Erreur chargement transactions:', error);
+    }
+}
+
+function displayRecentTransactions(transactions) {
+    const container = document.getElementById('transactions-list');
+    if (!container) return;
+    
+    const html = transactions.map(transaction => `
+        <div class="transaction-card mb-3 p-3 border rounded">
+            <div class="d-flex justify-content-between align-items-start">
+                <div class="flex-grow-1">
+                    <h6 class="mb-1">${transaction.title}</h6>
+                    <p class="text-muted mb-2 small">${transaction.description.substring(0, 100)}...</p>
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="badge bg-light text-dark">
+                            <i class="bi bi-cash me-1"></i>${formatAmount(transaction.amount)}
+                        </span>
+                        ${getStatusBadge(transaction.status)}
+                        <small class="text-muted">
+                            <i class="bi bi-calendar me-1"></i>${formatDate(transaction.created_at)}
+                        </small>
+                    </div>
+                </div>
+                <div class="ms-3">
+                    <a href="/escrow/transaction/${transaction.id}/" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-eye"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    `).join('');
+    
+    container.innerHTML = html;
+}
+
+// Animation des statistiques au chargement
+function animateStats() {
+    const statNumbers = document.querySelectorAll('.stats-card h3');
+    
+    statNumbers.forEach(stat => {
+        const target = parseInt(stat.textContent) || 0;
+        let current = 0;
+        const increment = target / 50;
+        
+        const timer = setInterval(() => {
+            current += increment;
+            if (current >= target) {
+                stat.textContent = target;
+                clearInterval(timer);
+            } else {
+                stat.textContent = Math.floor(current);
+            }
+        }, 20);
+    });
+}
+
+// Observer pour déclencher l'animation des stats
+const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            animateStats();
+            observer.disconnect();
+        }
+    });
+});
+
+const statsRow = document.querySelector('.row.g-4:first-of-type');
+if (statsRow) {
+    observer.observe(statsRow);
+}
+</script>
+{% endblock %}

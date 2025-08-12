@@ -1,0 +1,131 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Méthodes de Paiement - Kimi Escrow{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <h2><i class="bi bi-credit-card me-2"></i>Méthodes de Paiement</h2>
+            <p class="text-muted">Gérez vos options de paiement Mobile Money</p>
+            
+            <!-- Mobile Money Options -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card border-warning">
+                        <div class="card-body text-center">
+                            <div class="mb-3">
+                                <img src="{% static 'images/mtn-logo.png' %}" alt="MTN" style="height: 60px;" class="mb-2">
+                            </div>
+                            <h5 class="card-title text-warning">MTN Mobile Money</h5>
+                            <p class="card-text">Payez directement avec votre compte MTN MoMo</p>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="mtn-enabled" checked>
+                                <label class="form-check-label" for="mtn-enabled">
+                                    Activé pour paiements
+                                </label>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Numéro MTN MoMo</label>
+                                <input type="tel" class="form-control" placeholder="+237 6XX XXX XXX" value="+237 612 345 678">
+                            </div>
+                            <button class="btn btn-warning">Mettre à jour</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card border-warning">
+                        <div class="card-body text-center">
+                            <div class="mb-3">
+                                <img src="{% static 'images/orange-logo.png' %}" alt="Orange" style="height: 60px;" class="mb-2">
+                            </div>
+                            <h5 class="card-title text-warning">Orange Money</h5>
+                            <p class="card-text">Payez avec votre compte Orange Money</p>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="orange-enabled">
+                                <label class="form-check-label" for="orange-enabled">
+                                    Activé pour paiements
+                                </label>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Numéro Orange Money</label>
+                                <input type="tel" class="form-control" placeholder="+237 6XX XXX XXX">
+                            </div>
+                            <button class="btn btn-warning">Ajouter</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Payment History -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Historique des Paiements</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Transaction</th>
+                                    <th>Méthode</th>
+                                    <th>Montant</th>
+                                    <th>Statut</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>10/08/2024</td>
+                                    <td>iPhone 13 Pro Max</td>
+                                    <td><i class="bi bi-phone text-warning me-1"></i>MTN MoMo</td>
+                                    <td>450,000 FCFA</td>
+                                    <td><span class="badge bg-success">Confirmé</span></td>
+                                </tr>
+                                <tr>
+                                    <td>08/08/2024</td>
+                                    <td>MacBook Air M2</td>
+                                    <td><i class="bi bi-phone text-warning me-1"></i>MTN MoMo</td>
+                                    <td>850,000 FCFA</td>
+                                    <td><span class="badge bg-success">Confirmé</span></td>
+                                </tr>
+                                <tr>
+                                    <td>05/08/2024</td>
+                                    <td>Samsung Galaxy S24</td>
+                                    <td><i class="bi bi-phone text-warning me-1"></i>Orange Money</td>
+                                    <td>320,000 FCFA</td>
+                                    <td><span class="badge bg-warning">En attente</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Security Info -->
+            <div class="alert alert-info">
+                <h6><i class="bi bi-shield-check me-2"></i>Sécurité des Paiements</h6>
+                <ul class="mb-0">
+                    <li>Tous les paiements sont chiffrés et sécurisés</li>
+                    <li>Vos fonds sont protégés jusqu'à confirmation de livraison</li>
+                    <li>Aucune information bancaire n'est stockée sur nos serveurs</li>
+                    <li>Authentification à deux facteurs pour tous les paiements</li>
+                </ul>
+            </div>
+            
+            <!-- Actions -->
+            <div class="text-center">
+                <a href="/" class="btn btn-outline-secondary me-2">
+                    <i class="bi bi-arrow-left me-2"></i>Retour
+                </a>
+                <button class="btn btn-primary">
+                    <i class="bi bi-download me-2"></i>Télécharger Historique
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

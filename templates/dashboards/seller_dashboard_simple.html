@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Vendeur - Kimi Escrow</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-success">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-shield-check me-2"></i>Kimi Escrow
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/">Accueil</a>
+                <a class="nav-link" href="/transactions/seller/">Mes Ventes</a>
+                <a class="nav-link" href="/disputes/seller/">Litiges</a>
+                <a class="nav-link" href="/profile/">Profil</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Dashboard Header -->
+    <div class="bg-success text-white py-4">
+        <div class="container">
+            <h1><i class="bi bi-shop me-3"></i>Dashboard Vendeur</h1>
+            <p class="mb-0">Gérez vos ventes et commandes</p>
+        </div>
+    </div>
+
+    <div class="container py-4">
+        <!-- Statistics Cards -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-3">
+                <div class="card h-100 border-success">
+                    <div class="card-body text-center">
+                        <i class="bi bi-shop display-4 text-success"></i>
+                        <h3 class="mt-2">12</h3>
+                        <p class="text-muted">Mes ventes</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="card h-100 border-primary">
+                    <div class="card-body text-center">
+                        <i class="bi bi-clock display-4 text-primary"></i>
+                        <h3 class="mt-2">3</h3>
+                        <p class="text-muted">Commandes en cours</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="card h-100 border-warning">
+                    <div class="card-body text-center">
+                        <i class="bi bi-exclamation-triangle display-4 text-warning"></i>
+                        <h3 class="mt-2">1</h3>
+                        <p class="text-muted">En attente de preuve</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="card h-100 border-info">
+                    <div class="card-body text-center">
+                        <i class="bi bi-cash-coin display-4 text-info"></i>
+                        <h3 class="mt-2">2,450,000</h3>
+                        <p class="text-muted">Revenus (FCFA)</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="row g-4 mb-4">
+            <div class="col-12">
+                <h5>Actions rapides</h5>
+            </div>
+            
+            <div class="col-md-3">
+                <a href="/transactions/seller/" class="btn btn-outline-success w-100 p-4 text-center">
+                    <i class="bi bi-list-ul display-6 d-block"></i>
+                    <strong>Mes commandes</strong><br>
+                    <small>Voir les nouvelles commandes</small>
+                </a>
+            </div>
+            
+            <div class="col-md-3">
+                <a href="/proofs/upload/" class="btn btn-outline-primary w-100 p-4 text-center">
+                    <i class="bi bi-upload display-6 d-block"></i>
+                    <strong>Upload preuve</strong><br>
+                    <small>Confirmer une livraison</small>
+                </a>
+            </div>
+            
+            <div class="col-md-3">
+                <a href="/payments/history/" class="btn btn-outline-info w-100 p-4 text-center">
+                    <i class="bi bi-cash-stack display-6 d-block"></i>
+                    <strong>Historique paiements</strong><br>
+                    <small>Voir mes revenus</small>
+                </a>
+            </div>
+            
+            <div class="col-md-3">
+                <a href="/profile/" class="btn btn-outline-secondary w-100 p-4 text-center">
+                    <i class="bi bi-person-gear display-6 d-block"></i>
+                    <strong>Mon profil</strong><br>
+                    <small>Mettre à jour mes infos</small>
+                </a>
+            </div>
+        </div>
+
+        <!-- Recent Orders -->
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="bi bi-bag-check me-2"></i>Commandes récentes</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>#ID</th>
+                                        <th>Produit</th>
+                                        <th>Montant</th>
+                                        <th>Statut</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>#12347</td>
+                                        <td>Téléphone Samsung Galaxy</td>
+                                        <td>450,000 FCFA</td>
+                                        <td><span class="badge bg-warning">En attente</span></td>
+                                        <td><a href="#" class="btn btn-sm btn-outline-primary">Voir</a></td>
+                                    </tr>
+                                    <tr>
+                                        <td>#12346</td>
+                                        <td>Ordinateur portable</td>
+                                        <td>800,000 FCFA</td>
+                                        <td><span class="badge bg-success">Confirmé</span></td>
+                                        <td><a href="#" class="btn btn-sm btn-outline-success">Upload preuve</a></td>
+                                    </tr>
+                                    <tr>
+                                        <td>#12345</td>
+                                        <td>Montre connectée</td>
+                                        <td>150,000 FCFA</td>
+                                        <td><span class="badge bg-info">Livré</span></td>
+                                        <td><a href="#" class="btn btn-sm btn-outline-info">Détails</a></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sales Tips -->
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="bi bi-lightbulb me-2"></i>Conseils de vente</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-success">
+                            <i class="bi bi-camera"></i>
+                            Prenez des photos claires de vos produits.
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <i class="bi bi-clock"></i>
+                            Livrez rapidement pour maintenir votre réputation.
+                        </div>
+                        
+                        <div class="alert alert-warning">
+                            <i class="bi bi-shield-check"></i>
+                            Uploadez toujours vos preuves de livraison.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

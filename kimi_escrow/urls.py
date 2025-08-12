@@ -50,7 +50,6 @@ urlpatterns = [
     re_path(r'^swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=0), name='schema-json'),
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
-    path('', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui-root'),
     
     # API Endpoints
     path('api/auth/', include('users.urls')),
@@ -58,6 +57,9 @@ urlpatterns = [
     path('api/payments/', include('payments.urls')),
     path('api/disputes/', include('disputes.urls')),
     path('api/core/', include('core.urls')),
+    
+    # Frontend Django Templates (doit être en dernier pour catch-all)
+    path('', include('frontend_urls')),
 ]
 
 if settings.DEBUG:

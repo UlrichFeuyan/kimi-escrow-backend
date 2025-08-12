@@ -1,0 +1,23 @@
+<!-- Navigation Vendeur -->
+<ul class="navbar-nav me-auto">
+    <li class="nav-item">
+        <a class="nav-link" href="{% url 'seller_dashboard' %}">
+            <i class="bi bi-house me-1"></i>Dashboard
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="{% url 'seller_transactions' %}">
+            <i class="bi bi-cart me-1"></i>Mes ventes
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="{% url 'seller_disputes' %}">
+            <i class="bi bi-exclamation-triangle me-1"></i>Litiges
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="{% url 'payment_history' %}">
+            <i class="bi bi-wallet me-1"></i>Revenus
+        </a>
+    </li>
+</ul>

@@ -58,3 +58,4 @@ class EscrowAccountSerializer(serializers.ModelSerializer):
             'opened_at', 'closed_at'
         ]
         read_only_fields = fields
+

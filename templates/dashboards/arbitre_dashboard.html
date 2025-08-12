@@ -1,0 +1,598 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard Arbitre - Kimi Escrow{% endblock %}
+
+{% block extra_css %}
+<style>
+    .arbitre-header {
+        background: linear-gradient(135deg, #e83e8c 0%, #d63384 100%);
+        color: white;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+    }
+    
+    .arbitre-stats .card {
+        border-left: 4px solid;
+        transition: all 0.3s ease;
+    }
+    
+    .arbitre-stats .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+    
+    .stats-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .dispute-priority {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    
+    .priority-high {
+        background-color: #dc3545;
+        color: white;
+    }
+    
+    .priority-medium {
+        background-color: #ffc107;
+        color: #000;
+    }
+    
+    .priority-low {
+        background-color: #28a745;
+        color: white;
+    }
+    
+    .dispute-card {
+        border-left: 4px solid;
+        transition: all 0.3s ease;
+    }
+    
+    .dispute-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+    
+    .dispute-urgent {
+        border-left-color: #dc3545;
+    }
+    
+    .dispute-normal {
+        border-left-color: #007bff;
+    }
+    
+    .arbitre-actions .btn {
+        margin-right: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .timeline-item {
+        border-left: 3px solid #dee2e6;
+        padding-left: 1rem;
+        margin-bottom: 1rem;
+        position: relative;
+    }
+    
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: -6px;
+        top: 0.5rem;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background-color: #007bff;
+    }
+    
+    .performance-metric {
+        text-align: center;
+        padding: 1rem;
+        border: 1px solid #dee2e6;
+        border-radius: 0.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .metric-value {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #007bff;
+    }
+    
+    .metric-label {
+        font-size: 0.875rem;
+        color: #6c757d;
+        text-transform: uppercase;
+        font-weight: 600;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="arbitre-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="mb-2">
+                    <i class="bi bi-balance-scale me-3"></i>
+                    Dashboard Arbitre
+                </h1>
+                <p class="mb-0 opacity-75">
+                    Gérez les litiges et assurez des transactions équitables
+                </p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-outline-light" onclick="refreshDashboard()">
+                        <i class="bi bi-arrow-clockwise me-2"></i>Actualiser
+                    </button>
+                    <button type="button" class="btn btn-light" data-bs-toggle="modal" data-bs-target="#settingsModal">
+                        <i class="bi bi-gear me-2"></i>Paramètres
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Statistiques -->
+    <div class="row arbitre-stats mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card h-100" style="border-left-color: #e83e8c;">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <div class="stats-icon" style="background-color: rgba(232, 62, 140, 0.1); color: #e83e8c;">
+                                <i class="bi bi-exclamation-triangle"></i>
+                            </div>
+                            <h3 class="mb-0">{{ assigned_disputes|length|default:0 }}</h3>
+                            <small class="text-muted">Litiges assignés</small>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-danger">{{ urgent_count|default:0 }} urgents</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card h-100" style="border-left-color: #007bff;">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <div class="stats-icon" style="background-color: rgba(0, 123, 255, 0.1); color: #007bff;">
+                                <i class="bi bi-clock"></i>
+                            </div>
+                            <h3 class="mb-0">{{ pending_count|default:0 }}</h3>
+                            <small class="text-muted">En attente</small>
+                        </div>
+                        <div class="text-end">
+                            <small class="text-muted">Nouveaux aujourd'hui</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card h-100" style="border-left-color: #28a745;">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <div class="stats-icon" style="background-color: rgba(40, 167, 69, 0.1); color: #28a745;">
+                                <i class="bi bi-check-circle"></i>
+                            </div>
+                            <h3 class="mb-0">{{ resolved_count|default:0 }}</h3>
+                            <small class="text-muted">Résolus ce mois</small>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge bg-success">+{{ new_resolved|default:0 }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card h-100" style="border-left-color: #ffc107;">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <div class="stats-icon" style="background-color: rgba(255, 193, 7, 0.1); color: #ffc107;">
+                                <i class="bi bi-star"></i>
+                            </div>
+                            <h3 class="mb-0">{{ avg_rating|default:"4.8" }}</h3>
+                            <small class="text-muted">Note moyenne</small>
+                        </div>
+                        <div class="text-end">
+                            {% for i in "12345"|make_list %}
+                                <i class="bi bi-star-fill text-warning"></i>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Litiges assignés -->
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-list-task me-2"></i>
+                        Litiges assignés
+                    </h5>
+                    <div class="btn-group btn-group-sm" role="group">
+                        <input type="radio" class="btn-check" name="filterOptions" id="all" checked>
+                        <label class="btn btn-outline-primary" for="all">Tous</label>
+                        
+                        <input type="radio" class="btn-check" name="filterOptions" id="urgent">
+                        <label class="btn btn-outline-danger" for="urgent">Urgents</label>
+                        
+                        <input type="radio" class="btn-check" name="filterOptions" id="new">
+                        <label class="btn btn-outline-info" for="new">Nouveaux</label>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if assigned_disputes %}
+                        {% for dispute in assigned_disputes %}
+                        <div class="dispute-card card mb-3 {% if dispute.priority == 'HIGH' %}dispute-urgent{% else %}dispute-normal{% endif %}">
+                            <div class="card-body">
+                                <div class="row align-items-center">
+                                    <div class="col-md-8">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <h6 class="mb-0 me-3">Litige #{{ dispute.id|default:"12345" }}</h6>
+                                            <span class="dispute-priority {% if dispute.priority == 'HIGH' %}priority-high{% elif dispute.priority == 'MEDIUM' %}priority-medium{% else %}priority-low{% endif %}">
+                                                {% if dispute.priority == 'HIGH' %}Urgent{% elif dispute.priority == 'MEDIUM' %}Moyen{% else %}Normal{% endif %}
+                                            </span>
+                                        </div>
+                                        <p class="text-muted mb-2">
+                                            {{ dispute.reason|default:"Produit non conforme à la description" }}
+                                        </p>
+                                        <div class="d-flex align-items-center text-sm">
+                                            <span class="me-3">
+                                                <i class="bi bi-cash text-success"></i>
+                                                {{ dispute.amount_disputed|default:"150,000" }} FCFA
+                                            </span>
+                                            <span class="me-3">
+                                                <i class="bi bi-calendar text-info"></i>
+                                                {{ dispute.created_at|default:"Il y a 2h" }}
+                                            </span>
+                                            <span class="me-3">
+                                                <i class="bi bi-people text-primary"></i>
+                                                Acheteur vs Vendeur
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 text-md-end">
+                                        <div class="arbitre-actions">
+                                            <a href="{% url 'dispute_detail' dispute.id|default:1 %}" class="btn btn-primary btn-sm">
+                                                <i class="bi bi-eye"></i> Examiner
+                                            </a>
+                                            <button class="btn btn-success btn-sm" onclick="quickResolve({{ dispute.id|default:1 }})">
+                                                <i class="bi bi-check"></i> Résoudre
+                                            </button>
+                                            <button class="btn btn-outline-secondary btn-sm" onclick="requestMoreInfo({{ dispute.id|default:1 }})">
+                                                <i class="bi bi-info-circle"></i> Plus d'infos
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="bi bi-inbox display-1 text-muted"></i>
+                            <h4 class="mt-3">Aucun litige assigné</h4>
+                            <p class="text-muted">Vous n'avez actuellement aucun litige à traiter.</p>
+                            <button class="btn btn-primary" onclick="refreshDashboard()">
+                                <i class="bi bi-arrow-clockwise me-2"></i>Actualiser
+                            </button>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Panneau latéral -->
+        <div class="col-lg-4">
+            <!-- Performances -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-graph-up me-2"></i>
+                        Performances
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="performance-metric">
+                                <div class="metric-value">{{ resolution_time|default:"2.4" }}</div>
+                                <div class="metric-label">Jours moy.</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="performance-metric">
+                                <div class="metric-value">{{ satisfaction_rate|default:"96" }}%</div>
+                                <div class="metric-label">Satisfaction</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <h6 class="text-muted mb-2">Évolution ce mois</h6>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span>Temps de résolution</span>
+                            <span class="text-success">
+                                <i class="bi bi-arrow-down"></i> -15%
+                            </span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>Taux de satisfaction</span>
+                            <span class="text-success">
+                                <i class="bi bi-arrow-up"></i> +3%
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Activité récente -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-clock-history me-2"></i>
+                        Activité récente
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        <div class="timeline-item">
+                            <small class="text-muted">Il y a 15 min</small>
+                            <p class="mb-0">Litige #12347 résolu en faveur de l'acheteur</p>
+                        </div>
+                        <div class="timeline-item">
+                            <small class="text-muted">Il y a 1h</small>
+                            <p class="mb-0">Nouveau litige #12348 assigné</p>
+                        </div>
+                        <div class="timeline-item">
+                            <small class="text-muted">Il y a 2h</small>
+                            <p class="mb-0">Preuves supplémentaires reçues pour #12346</p>
+                        </div>
+                        <div class="timeline-item">
+                            <small class="text-muted">Il y a 3h</small>
+                            <p class="mb-0">Litige #12345 résolu - remboursement partiel</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Actions rapides -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-lightning me-2"></i>
+                        Actions rapides
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button type="button" class="btn btn-outline-primary" onclick="showAllDisputes()">
+                            <i class="bi bi-list me-2"></i>Voir tous les litiges
+                        </button>
+                        <button type="button" class="btn btn-outline-info" onclick="showStatistics()">
+                            <i class="bi bi-bar-chart me-2"></i>Statistiques détaillées
+                        </button>
+                        <button type="button" class="btn btn-outline-success" onclick="showResolutionGuide()">
+                            <i class="bi bi-book me-2"></i>Guide de résolution
+                        </button>
+                        <button type="button" class="btn btn-outline-warning" onclick="showTraining()">
+                            <i class="bi bi-mortarboard me-2"></i>Formation continue
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Paramètres -->
+<div class="modal fade" id="settingsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Paramètres Arbitre</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Notifications</label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="notifNewDispute" checked>
+                        <label class="form-check-label" for="notifNewDispute">
+                            Nouveaux litiges assignés
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="notifUrgent" checked>
+                        <label class="form-check-label" for="notifUrgent">
+                            Litiges urgents uniquement
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="notifReminders" checked>
+                        <label class="form-check-label" for="notifReminders">
+                            Rappels de délais
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Disponibilité</label>
+                    <select class="form-select">
+                        <option>Disponible (8h-18h)</option>
+                        <option>Partiellement disponible</option>
+                        <option>Non disponible</option>
+                    </select>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Spécialités</label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="specElectronics" checked>
+                        <label class="form-check-label" for="specElectronics">
+                            Électronique
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="specFashion">
+                        <label class="form-check-label" for="specFashion">
+                            Mode et vêtements
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="specServices" checked>
+                        <label class="form-check-label" for="specServices">
+                            Services
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-primary">Sauvegarder</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-refresh toutes les 5 minutes
+    setInterval(refreshDashboard, 300000);
+    
+    // Filtres de litiges
+    const filterButtons = document.querySelectorAll('input[name="filterOptions"]');
+    filterButtons.forEach(button => {
+        button.addEventListener('change', function() {
+            filterDisputes(this.id);
+        });
+    });
+});
+
+function refreshDashboard() {
+    // Simulation du refresh - remplacer par l'appel API réel
+    window.location.reload();
+}
+
+function filterDisputes(filter) {
+    const disputes = document.querySelectorAll('.dispute-card');
+    disputes.forEach(dispute => {
+        const isUrgent = dispute.classList.contains('dispute-urgent');
+        const isNew = dispute.querySelector('.badge')?.textContent?.includes('Nouveau') || false;
+        
+        let show = true;
+        if (filter === 'urgent' && !isUrgent) show = false;
+        if (filter === 'new' && !isNew) show = false;
+        
+        dispute.style.display = show ? 'block' : 'none';
+    });
+}
+
+async function quickResolve(disputeId) {
+    const result = await Swal.fire({
+        title: 'Résolution rapide',
+        text: 'Sélectionnez une résolution:',
+        input: 'select',
+        inputOptions: {
+            'buyer_wins': 'Donner raison à l\'acheteur',
+            'seller_wins': 'Donner raison au vendeur',
+            'partial_refund': 'Remboursement partiel'
+        },
+        showCancelButton: true,
+        confirmButtonText: 'Résoudre',
+        cancelButtonText: 'Annuler'
+    });
+    
+    if (result.isConfirmed) {
+        // Simulation API call
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        Swal.fire('Résolu!', 'Le litige a été résolu avec succès.', 'success');
+        refreshDashboard();
+    }
+}
+
+async function requestMoreInfo(disputeId) {
+    const { value: message } = await Swal.fire({
+        title: 'Demander plus d\'informations',
+        input: 'textarea',
+        inputPlaceholder: 'Décrivez les informations supplémentaires nécessaires...',
+        showCancelButton: true,
+        confirmButtonText: 'Envoyer',
+        cancelButtonText: 'Annuler'
+    });
+    
+    if (message) {
+        // Simulation API call
+        await new Promise(resolve => setTimeout(resolve, 500));
+        Swal.fire('Envoyé!', 'Demande d\'informations envoyée aux parties.', 'success');
+    }
+}
+
+function showAllDisputes() {
+    window.location.href = '{% url "arbitre_disputes" %}';
+}
+
+function showStatistics() {
+    // Ouvrir un modal avec des statistiques détaillées
+    alert('Fonctionnalité en développement');
+}
+
+function showResolutionGuide() {
+    // Ouvrir le guide de résolution
+    alert('Guide de résolution - Fonctionnalité en développement');
+}
+
+function showTraining() {
+    // Ouvrir les modules de formation
+    alert('Formation continue - Fonctionnalité en développement');
+}
+
+// SweetAlert2 pour de meilleures notifications
+if (typeof Swal === 'undefined') {
+    // Fallback si SweetAlert2 n'est pas chargé
+    window.Swal = {
+        fire: function(title, text, icon) {
+            alert(title + ': ' + text);
+            return Promise.resolve({ isConfirmed: true });
+        }
+    };
+    
+    // Charger SweetAlert2
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/sweetalert2@11';
+    document.head.appendChild(script);
+}
+</script>
+{% endblock %}

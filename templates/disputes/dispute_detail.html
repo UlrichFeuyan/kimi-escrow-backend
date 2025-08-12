@@ -1,0 +1,829 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Litige #{{ dispute.id|default:"67890" }} - Kimi Escrow{% endblock %}
+
+{% block extra_css %}
+<style>
+    .dispute-header {
+        background: linear-gradient(135deg, #dc3545 0%, #b02a37 100%);
+        color: white;
+        padding: 2rem 0;
+        margin-bottom: 2rem;
+    }
+    
+    .dispute-status {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.875rem;
+    }
+    
+    .status-open {
+        background-color: rgba(255, 193, 7, 0.2);
+        color: #856404;
+        border: 1px solid #ffc107;
+    }
+    
+    .status-investigating {
+        background-color: rgba(0, 123, 255, 0.2);
+        color: #004085;
+        border: 1px solid #007bff;
+    }
+    
+    .status-resolved {
+        background-color: rgba(40, 167, 69, 0.2);
+        color: #155724;
+        border: 1px solid #28a745;
+    }
+    
+    .evidence-container {
+        border: 1px solid #dee2e6;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .evidence-container:hover {
+        border-color: #007bff;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+    
+    .evidence-image {
+        max-width: 200px;
+        max-height: 200px;
+        object-fit: cover;
+        border-radius: 0.25rem;
+        cursor: pointer;
+    }
+    
+    .comment-item {
+        border-left: 3px solid;
+        padding-left: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .comment-admin {
+        border-left-color: #6f42c1;
+        background-color: rgba(111, 66, 193, 0.05);
+        padding: 1rem;
+        border-radius: 0.5rem;
+    }
+    
+    .comment-plaintiff {
+        border-left-color: #007bff;
+    }
+    
+    .comment-defendant {
+        border-left-color: #28a745;
+    }
+    
+    .comment-arbitre {
+        border-left-color: #e83e8c;
+        background-color: rgba(232, 62, 140, 0.05);
+        padding: 1rem;
+        border-radius: 0.5rem;
+    }
+    
+    .timeline-dispute {
+        position: relative;
+        padding-left: 2rem;
+    }
+    
+    .timeline-dispute::before {
+        content: '';
+        position: absolute;
+        left: 0.75rem;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background-color: #dee2e6;
+    }
+    
+    .timeline-item-dispute {
+        position: relative;
+        margin-bottom: 2rem;
+    }
+    
+    .timeline-item-dispute::before {
+        content: '';
+        position: absolute;
+        left: -2.25rem;
+        top: 0.5rem;
+        width: 12px;
+        height: 12px;
+        background-color: #007bff;
+        border-radius: 50%;
+        border: 2px solid #fff;
+    }
+    
+    .resolution-panel {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .file-upload-zone {
+        border: 2px dashed #ced4da;
+        border-radius: 0.5rem;
+        padding: 2rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .file-upload-zone:hover,
+    .file-upload-zone.dragover {
+        border-color: #007bff;
+        background-color: rgba(0, 123, 255, 0.05);
+    }
+    
+    .attachment-item {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem;
+        border: 1px solid #dee2e6;
+        border-radius: 0.25rem;
+        margin-bottom: 0.5rem;
+        transition: all 0.3s ease;
+    }
+    
+    .attachment-item:hover {
+        border-color: #007bff;
+        background-color: #f8f9fa;
+    }
+    
+    .attachment-icon {
+        width: 32px;
+        height: 32px;
+        background-color: #f8f9fa;
+        border-radius: 0.25rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 0.75rem;
+        font-size: 1rem;
+        color: #6c757d;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="dispute-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="mb-2">
+                    <i class="bi bi-exclamation-triangle me-3"></i>
+                    Litige #{{ dispute.id|default:"67890" }}
+                </h1>
+                <p class="mb-0 opacity-75">
+                    {{ dispute.reason|default:"Produit non conforme à la description" }}
+                </p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <div class="d-flex flex-column align-items-md-end">
+                    <span class="dispute-status {% if dispute.status == 'OPEN' %}status-open{% elif dispute.status == 'INVESTIGATING' %}status-investigating{% else %}status-resolved{% endif %} mb-2">
+                        {% if dispute.status == 'OPEN' %}
+                            Ouvert
+                        {% elif dispute.status == 'INVESTIGATING' %}
+                            En cours d'examen
+                        {% else %}
+                            Résolu
+                        {% endif %}
+                    </span>
+                    <h3 class="mb-0">{{ dispute.amount_disputed|default:"75,000" }} FCFA</h3>
+                    <small class="opacity-75">Montant contesté</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row">
+        <!-- Contenu principal -->
+        <div class="col-lg-8">
+            <!-- Informations du litige -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Détails du litige
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-1">Demandeur (Plaignant)</h6>
+                            <div class="d-flex align-items-center mb-3">
+                                <i class="bi bi-person-circle fs-4 me-2 text-primary"></i>
+                                <div>
+                                    <strong>{{ dispute.plaintiff_name|default:"Jean Achille" }}</strong>
+                                    <br>
+                                    <small class="text-muted">{{ dispute.plaintiff_phone|default:"+237698123456" }}</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-1">Défendeur</h6>
+                            <div class="d-flex align-items-center mb-3">
+                                <i class="bi bi-person-circle fs-4 me-2 text-success"></i>
+                                <div>
+                                    <strong>{{ dispute.defendant_name|default:"Marie Vendor" }}</strong>
+                                    <br>
+                                    <small class="text-muted">{{ dispute.defendant_phone|default:"+237677987654" }}</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <h6 class="text-muted mb-2">Description du problème</h6>
+                    <p class="mb-3">{{ dispute.description|default:"L'iPhone reçu ne correspond pas à la description. Il s'agit d'un modèle 128GB au lieu de 256GB comme annoncé. De plus, l'écran présente des rayures qui n'étaient pas mentionnées dans l'annonce. Je demande un remboursement partiel ou un échange." }}</p>
+                    
+                    <div class="row">
+                        <div class="col-md-4">
+                            <h6 class="text-muted mb-1">Transaction liée</h6>
+                            <a href="{% url 'transaction_detail' dispute.transaction_id|default:12345 %}" class="btn btn-outline-primary btn-sm">
+                                <i class="bi bi-receipt me-1"></i>
+                                #{{ dispute.transaction_id|default:"12345" }}
+                            </a>
+                        </div>
+                        <div class="col-md-4">
+                            <h6 class="text-muted mb-1">Date d'ouverture</h6>
+                            <span>{{ dispute.created_at|default:"13 août 2025, 16:30" }}</span>
+                        </div>
+                        <div class="col-md-4">
+                            <h6 class="text-muted mb-1">Arbitre assigné</h6>
+                            <span>{{ dispute.arbitre_name|default:"Sophie Arbitre" }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Preuves -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">
+                        <i class="bi bi-file-earmark-image me-2"></i>
+                        Preuves et documents
+                    </h6>
+                    <span class="badge bg-info">{{ evidence|length|default:3 }} élément(s)</span>
+                </div>
+                <div class="card-body">
+                    {% if user.is_authenticated %}
+                    <!-- Zone d'upload -->
+                    <div class="file-upload-zone mb-4" onclick="document.getElementById('evidenceFile').click()">
+                        <i class="bi bi-cloud-upload fs-1 text-muted mb-2"></i>
+                        <h6>Ajouter une preuve</h6>
+                        <p class="text-muted mb-0">Cliquez ou glissez-déposez vos fichiers ici</p>
+                        <small class="text-muted">JPG, PNG, PDF (max 10MB)</small>
+                        <input type="file" id="evidenceFile" class="d-none" multiple accept=".jpg,.jpeg,.png,.pdf">
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Liste des preuves -->
+                    <div class="evidence-container">
+                        <div class="d-flex align-items-start">
+                            <img src="https://via.placeholder.com/150x150/007bff/fff?text=Photo1" 
+                                 alt="Preuve 1" class="evidence-image me-3" 
+                                 onclick="showImageModal(this.src)">
+                            <div class="flex-grow-1">
+                                <h6>Photo de l'écran rayé</h6>
+                                <p class="text-muted mb-1">Uploadé par {{ dispute.plaintiff_name|default:"Jean Achille" }}</p>
+                                <small class="text-muted">13 août 2025, 16:45</small>
+                                <div class="mt-2">
+                                    <button class="btn btn-outline-primary btn-sm" onclick="downloadFile('evidence1.jpg')">
+                                        <i class="bi bi-download me-1"></i>Télécharger
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="evidence-container">
+                        <div class="d-flex align-items-start">
+                            <img src="https://via.placeholder.com/150x150/28a745/fff?text=Photo2" 
+                                 alt="Preuve 2" class="evidence-image me-3"
+                                 onclick="showImageModal(this.src)">
+                            <div class="flex-grow-1">
+                                <h6>Capture d'écran de l'annonce originale</h6>
+                                <p class="text-muted mb-1">Uploadé par {{ dispute.plaintiff_name|default:"Jean Achille" }}</p>
+                                <small class="text-muted">13 août 2025, 17:00</small>
+                                <div class="mt-2">
+                                    <button class="btn btn-outline-primary btn-sm" onclick="downloadFile('evidence2.jpg')">
+                                        <i class="bi bi-download me-1"></i>Télécharger
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="evidence-container">
+                        <div class="d-flex align-items-start">
+                            <div class="attachment-icon me-3">
+                                <i class="bi bi-file-pdf text-danger"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6>Réponse du vendeur avec photos</h6>
+                                <p class="text-muted mb-1">Uploadé par {{ dispute.defendant_name|default:"Marie Vendor" }}</p>
+                                <small class="text-muted">13 août 2025, 18:30</small>
+                                <div class="mt-2">
+                                    <button class="btn btn-outline-primary btn-sm" onclick="downloadFile('response.pdf')">
+                                        <i class="bi bi-download me-1"></i>Télécharger PDF
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Commentaires et échanges -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-chat-dots me-2"></i>
+                        Échanges et commentaires
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <!-- Commentaire initial -->
+                    <div class="comment-item comment-plaintiff">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="bi bi-person-circle fs-5 me-2 text-primary"></i>
+                            <strong>{{ dispute.plaintiff_name|default:"Jean Achille" }}</strong>
+                            <small class="text-muted ms-auto">13 août 2025, 16:30</small>
+                        </div>
+                        <p class="mb-0">{{ dispute.description|default:"L'iPhone reçu ne correspond pas à la description. Il s'agit d'un modèle 128GB au lieu de 256GB comme annoncé. De plus, l'écran présente des rayures qui n'étaient pas mentionnées dans l'annonce." }}</p>
+                    </div>
+                    
+                    <!-- Réponse du vendeur -->
+                    <div class="comment-item comment-defendant">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="bi bi-person-circle fs-5 me-2 text-success"></i>
+                            <strong>{{ dispute.defendant_name|default:"Marie Vendor" }}</strong>
+                            <small class="text-muted ms-auto">13 août 2025, 18:30</small>
+                        </div>
+                        <p class="mb-0">Je conteste cette accusation. Le téléphone était en parfait état au moment de l'expédition et correspond exactement à la description. J'ai des photos qui le prouvent. Les rayures ont probablement eu lieu pendant le transport ou après réception.</p>
+                    </div>
+                    
+                    <!-- Commentaire de l'arbitre -->
+                    <div class="comment-item comment-arbitre">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="bi bi-balance-scale fs-5 me-2 text-pink"></i>
+                            <strong>Sophie Arbitre</strong>
+                            <span class="badge badge-sm bg-pink text-white ms-2">Arbitre</span>
+                            <small class="text-muted ms-auto">14 août 2025, 09:15</small>
+                        </div>
+                        <p class="mb-0">J'ai examiné les preuves fournies par les deux parties. Je demande au vendeur de fournir des photos du téléphone prises avant l'expédition, ainsi que la preuve d'emballage sécurisé. À l'acheteur, merci de fournir des photos de l'emballage à réception.</p>
+                    </div>
+                    
+                    <!-- Nouveau commentaire -->
+                    {% if user.is_authenticated %}
+                    <hr>
+                    <form id="commentForm" class="mt-3">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="commentText" class="form-label">Ajouter un commentaire</label>
+                            <textarea class="form-control" id="commentText" rows="3" 
+                                      placeholder="Expliquez votre point de vue ou apportez des clarifications..." required></textarea>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">Vos commentaires seront visibles par toutes les parties</small>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-send me-2"></i>Publier
+                            </button>
+                        </div>
+                    </form>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Résolution (pour arbitres) -->
+            {% if user.profile.role == 'ARBITRE' and dispute.status != 'RESOLVED' %}
+            <div class="card mb-4">
+                <div class="card-header bg-warning">
+                    <h6 class="mb-0">
+                        <i class="bi bi-gavel me-2"></i>
+                        Résolution du litige
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="resolution-panel">
+                        <form id="resolutionForm">
+                            {% csrf_token %}
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Décision</label>
+                                    <select class="form-select" id="resolutionType" required>
+                                        <option value="">Sélectionner une décision</option>
+                                        <option value="buyer_wins">Donner raison à l'acheteur</option>
+                                        <option value="seller_wins">Donner raison au vendeur</option>
+                                        <option value="partial_refund">Remboursement partiel</option>
+                                        <option value="mediation">Proposer une médiation</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Montant du remboursement (FCFA)</label>
+                                    <input type="number" class="form-control" id="refundAmount" 
+                                           placeholder="0" min="0" max="{{ dispute.amount_disputed|default:75000 }}">
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Justification de la décision</label>
+                                <textarea class="form-control" id="resolutionNotes" rows="4" 
+                                          placeholder="Expliquez votre décision en détail..." required></textarea>
+                            </div>
+                            
+                            <div class="d-flex justify-content-end gap-2">
+                                <button type="button" class="btn btn-outline-secondary" onclick="saveDraft()">
+                                    <i class="bi bi-save me-2"></i>Sauvegarder brouillon
+                                </button>
+                                <button type="submit" class="btn btn-warning">
+                                    <i class="bi bi-gavel me-2"></i>Finaliser la résolution
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Panneau latéral -->
+        <div class="col-lg-4">
+            <!-- Chronologie du litige -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-clock-history me-2"></i>
+                        Chronologie
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="timeline-dispute">
+                        <div class="timeline-item-dispute">
+                            <small class="text-muted">13 août 2025, 16:30</small>
+                            <h6>Litige ouvert</h6>
+                            <p class="mb-0 small">Par {{ dispute.plaintiff_name|default:"Jean Achille" }}</p>
+                        </div>
+                        
+                        <div class="timeline-item-dispute">
+                            <small class="text-muted">13 août 2025, 17:00</small>
+                            <h6>Preuves ajoutées</h6>
+                            <p class="mb-0 small">Photos de l'écran rayé</p>
+                        </div>
+                        
+                        <div class="timeline-item-dispute">
+                            <small class="text-muted">13 août 2025, 18:30</small>
+                            <h6>Réponse du vendeur</h6>
+                            <p class="mb-0 small">Contestation avec preuves</p>
+                        </div>
+                        
+                        <div class="timeline-item-dispute">
+                            <small class="text-muted">14 août 2025, 09:00</small>
+                            <h6>Arbitre assigné</h6>
+                            <p class="mb-0 small">Sophie Arbitre</p>
+                        </div>
+                        
+                        <div class="timeline-item-dispute">
+                            <small class="text-muted">14 août 2025, 09:15</small>
+                            <h6>Demande d'informations</h6>
+                            <p class="mb-0 small">Preuves supplémentaires requises</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Statistiques -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-bar-chart me-2"></i>
+                        Statistiques
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6 mb-3">
+                            <h4 class="text-primary mb-0">72h</h4>
+                            <small class="text-muted">Temps écoulé</small>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <h4 class="text-info mb-0">5j</h4>
+                            <small class="text-muted">Délai moyen</small>
+                        </div>
+                        <div class="col-6">
+                            <h4 class="text-success mb-0">3</h4>
+                            <small class="text-muted">Preuves</small>
+                        </div>
+                        <div class="col-6">
+                            <h4 class="text-warning mb-0">4</h4>
+                            <small class="text-muted">Échanges</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Actions rapides -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-lightning me-2"></i>
+                        Actions rapides
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        {% if user.profile.role == 'ARBITRE' %}
+                            <button type="button" class="btn btn-outline-primary btn-sm" onclick="requestMoreInfo()">
+                                <i class="bi bi-info-circle me-2"></i>Demander plus d'infos
+                            </button>
+                            <button type="button" class="btn btn-outline-success btn-sm" onclick="scheduleCall()">
+                                <i class="bi bi-telephone me-2"></i>Programmer un appel
+                            </button>
+                            <button type="button" class="btn btn-outline-warning btn-sm" onclick="escalateDispute()">
+                                <i class="bi bi-arrow-up me-2"></i>Escalader
+                            </button>
+                        {% else %}
+                            <button type="button" class="btn btn-outline-info btn-sm" onclick="contactArbitre()">
+                                <i class="bi bi-person me-2"></i>Contacter l'arbitre
+                            </button>
+                            <button type="button" class="btn btn-outline-success btn-sm" onclick="proposeResolution()">
+                                <i class="bi bi-handshake me-2"></i>Proposer un accord
+                            </button>
+                        {% endif %}
+                        
+                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="downloadReport()">
+                            <i class="bi bi-download me-2"></i>Télécharger rapport
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Support -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="bi bi-headset me-2"></i>
+                        Besoin d'aide ?
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <p class="small text-muted mb-3">
+                        Notre équipe est là pour vous aider à résoudre ce litige de manière équitable.
+                    </p>
+                    <div class="d-grid gap-2">
+                        <button type="button" class="btn btn-outline-primary btn-sm" onclick="contactSupport()">
+                            <i class="bi bi-chat me-2"></i>Chat support
+                        </button>
+                        <button type="button" class="btn btn-outline-info btn-sm" onclick="viewGuide()">
+                            <i class="bi bi-book me-2"></i>Guide des litiges
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal pour afficher les images -->
+<div class="modal fade" id="imageModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Preuve</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="modalImage" src="" alt="Preuve" class="img-fluid">
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Gestion de l'upload de fichiers
+    const fileInput = document.getElementById('evidenceFile');
+    if (fileInput) {
+        fileInput.addEventListener('change', handleFileUpload);
+    }
+    
+    // Gestion des formulaires
+    const commentForm = document.getElementById('commentForm');
+    if (commentForm) {
+        commentForm.addEventListener('submit', submitComment);
+    }
+    
+    const resolutionForm = document.getElementById('resolutionForm');
+    if (resolutionForm) {
+        resolutionForm.addEventListener('submit', submitResolution);
+    }
+});
+
+function handleFileUpload(event) {
+    const files = event.target.files;
+    for (let file of files) {
+        uploadEvidence(file);
+    }
+}
+
+async function uploadEvidence(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('description', `Preuve ajoutée par ${window.currentUser?.name || 'Utilisateur'}`);
+    
+    try {
+        const response = await fetch(`{% url "dispute_detail" dispute.id|default:1 %}evidence/`, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        });
+        
+        if (response.ok) {
+            showToast('Preuve ajoutée avec succès', 'success');
+            setTimeout(() => window.location.reload(), 1500);
+        } else {
+            showToast('Erreur lors de l\'upload', 'error');
+        }
+    } catch (error) {
+        showToast('Erreur de connexion', 'error');
+    }
+}
+
+async function submitComment(event) {
+    event.preventDefault();
+    
+    const commentText = document.getElementById('commentText').value;
+    if (!commentText.trim()) return;
+    
+    try {
+        const response = await fetch(`{% url "dispute_detail" dispute.id|default:1 %}comments/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({ comment: commentText })
+        });
+        
+        if (response.ok) {
+            showToast('Commentaire ajouté', 'success');
+            document.getElementById('commentText').value = '';
+            setTimeout(() => window.location.reload(), 1500);
+        } else {
+            showToast('Erreur lors de l\'envoi', 'error');
+        }
+    } catch (error) {
+        showToast('Erreur de connexion', 'error');
+    }
+}
+
+async function submitResolution(event) {
+    event.preventDefault();
+    
+    const resolutionType = document.getElementById('resolutionType').value;
+    const refundAmount = document.getElementById('refundAmount').value;
+    const resolutionNotes = document.getElementById('resolutionNotes').value;
+    
+    if (!resolutionType || !resolutionNotes.trim()) {
+        showToast('Veuillez remplir tous les champs requis', 'warning');
+        return;
+    }
+    
+    if (confirm('Êtes-vous sûr de vouloir finaliser cette résolution ? Cette action est irréversible.')) {
+        try {
+            const response = await fetch(`{% url "dispute_detail" dispute.id|default:1 %}resolve/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({
+                    resolution: resolutionType,
+                    refund_amount: refundAmount,
+                    notes: resolutionNotes
+                })
+            });
+            
+            if (response.ok) {
+                showToast('Litige résolu avec succès', 'success');
+                setTimeout(() => window.location.reload(), 2000);
+            } else {
+                showToast('Erreur lors de la résolution', 'error');
+            }
+        } catch (error) {
+            showToast('Erreur de connexion', 'error');
+        }
+    }
+}
+
+function showImageModal(imageSrc) {
+    document.getElementById('modalImage').src = imageSrc;
+    new bootstrap.Modal(document.getElementById('imageModal')).show();
+}
+
+function downloadFile(filename) {
+    // Simulation du téléchargement
+    const link = document.createElement('a');
+    link.href = `/api/disputes/{{ dispute.id|default:1 }}/evidence/${filename}`;
+    link.download = filename;
+    link.click();
+}
+
+function saveDraft() {
+    const data = {
+        resolution: document.getElementById('resolutionType').value,
+        refund_amount: document.getElementById('refundAmount').value,
+        notes: document.getElementById('resolutionNotes').value
+    };
+    
+    localStorage.setItem('dispute_draft_{{ dispute.id|default:1 }}', JSON.stringify(data));
+    showToast('Brouillon sauvegardé', 'success');
+}
+
+// Charger le brouillon s'il existe
+document.addEventListener('DOMContentLoaded', function() {
+    const draft = localStorage.getItem('dispute_draft_{{ dispute.id|default:1 }}');
+    if (draft) {
+        const data = JSON.parse(draft);
+        if (document.getElementById('resolutionType')) {
+            document.getElementById('resolutionType').value = data.resolution || '';
+            document.getElementById('refundAmount').value = data.refund_amount || '';
+            document.getElementById('resolutionNotes').value = data.notes || '';
+        }
+    }
+});
+
+function requestMoreInfo() {
+    const message = prompt('Quelles informations supplémentaires demandez-vous ?');
+    if (message) {
+        // Simulation d'envoi
+        showToast('Demande envoyée aux parties', 'success');
+    }
+}
+
+function scheduleCall() {
+    alert('Fonctionnalité de programmation d\'appel en développement');
+}
+
+function escalateDispute() {
+    if (confirm('Escalader ce litige vers un superviseur ?')) {
+        showToast('Litige escaladé', 'info');
+    }
+}
+
+function contactArbitre() {
+    window.location.href = `mailto:arbitre@kimi-escrow.com?subject=Litige #{{ dispute.id|default:67890 }}`;
+}
+
+function proposeResolution() {
+    const proposal = prompt('Décrivez votre proposition de résolution :');
+    if (proposal) {
+        showToast('Proposition envoyée à l\'arbitre', 'success');
+    }
+}
+
+function downloadReport() {
+    window.open(`/api/disputes/{{ dispute.id|default:1 }}/report/`, '_blank');
+}
+
+function contactSupport() {
+    window.open('https://wa.me/237123456789?text=Besoin d\'aide pour le litige #{{ dispute.id|default:67890 }}', '_blank');
+}
+
+function viewGuide() {
+    window.open('/help/dispute-guide/', '_blank');
+}
+
+function showToast(message, type) {
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type === 'success' ? 'success' : type === 'warning' ? 'warning' : type === 'info' ? 'info' : 'danger'} position-fixed top-0 start-50 translate-middle-x mt-3`;
+    toast.style.zIndex = '9999';
+    toast.innerHTML = `
+        <i class="bi bi-${type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-circle' : type === 'info' ? 'info-circle' : 'exclamation-triangle'} me-2"></i>
+        ${message}
+    `;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.remove();
+    }, 3000);
+}
+</script>
+{% endblock %}

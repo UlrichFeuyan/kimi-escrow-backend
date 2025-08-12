@@ -17,3 +17,4 @@ urlpatterns = [
     # Administration
     path('admin/statistics/', views.dispute_statistics, name='dispute-statistics'),
 ]
+

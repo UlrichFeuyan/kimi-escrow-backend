@@ -24,9 +24,17 @@ class DisputeListCreateView(generics.ListCreateAPIView, APIResponseMixin):
     def get_queryset(self):
         user = self.request.user
         
-        if user.role == 'ADMIN':
+        # Gestion du swagger fake view
+        if getattr(self, 'swagger_fake_view', False):
+            return Dispute.objects.none()
+        
+        # Vérifier si l'utilisateur est authentifié et a un profil
+        if not user.is_authenticated or not hasattr(user, 'profile'):
+            return Dispute.objects.none()
+        
+        if user.profile.role == 'ADMIN':
             return Dispute.objects.all()
-        elif user.role == 'ARBITRE':
+        elif user.profile.role == 'ARBITRE':
             return Dispute.objects.filter(
                 Q(arbitre=user) | Q(status='OPEN')
             )
@@ -56,7 +64,15 @@ class DisputeDetailView(generics.RetrieveUpdateAPIView, APIResponseMixin):
     def get_queryset(self):
         user = self.request.user
         
-        if user.role in ['ADMIN', 'ARBITRE']:
+        # Gestion du swagger fake view
+        if getattr(self, 'swagger_fake_view', False):
+            return Dispute.objects.none()
+        
+        # Vérifier si l'utilisateur est authentifié et a un profil
+        if not user.is_authenticated or not hasattr(user, 'profile'):
+            return Dispute.objects.none()
+        
+        if user.profile.role in ['ADMIN', 'ARBITRE']:
             return Dispute.objects.all()
         else:
             return Dispute.objects.filter(
@@ -145,7 +161,8 @@ class DisputeCommentListCreateView(generics.ListCreateAPIView, APIResponseMixin)
         queryset = DisputeComment.objects.filter(dispute_id=dispute_id)
         
         # Les commentaires internes ne sont visibles que par les arbitres et admins
-        if self.request.user.role not in ['ADMIN', 'ARBITRE']:
+        if (hasattr(self.request.user, 'profile') and 
+            self.request.user.profile.role not in ['ADMIN', 'ARBITRE']):
             queryset = queryset.filter(is_internal=False)
         
         return queryset.order_by('created_at')
@@ -159,7 +176,9 @@ class DisputeCommentListCreateView(generics.ListCreateAPIView, APIResponseMixin)
         if dispute.arbitre:
             allowed_users.append(dispute.arbitre)
         
-        if self.request.user not in allowed_users and self.request.user.role != 'ADMIN':
+        if (self.request.user not in allowed_users and 
+            (not hasattr(self.request.user, 'profile') or 
+             self.request.user.profile.role != 'ADMIN')):
             raise permissions.PermissionDenied("Vous ne pouvez pas commenter ce litige")
         
         serializer.save(dispute=dispute, author=self.request.user)

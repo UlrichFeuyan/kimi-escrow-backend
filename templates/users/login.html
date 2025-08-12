@@ -1,0 +1,246 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Connexion - Kimi Escrow{% endblock %}
+
+{% block extra_css %}
+<style>
+    .auth-container {
+        min-height: 80vh;
+        display: flex;
+        align-items: center;
+    }
+    
+    .auth-card {
+        max-width: 450px;
+        margin: 0 auto;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+    
+    .auth-header {
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        color: white;
+        text-align: center;
+        padding: 2rem 1.5rem 1.5rem;
+        border-radius: 0.375rem 0.375rem 0 0;
+    }
+    
+    .auth-body {
+        padding: 2rem 1.5rem;
+    }
+    
+    .form-floating .form-control {
+        height: calc(3.5rem + 2px);
+    }
+    
+    .social-login {
+        border-top: 1px solid #dee2e6;
+        padding-top: 1.5rem;
+        margin-top: 1.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-6">
+                <div class="card auth-card border-0">
+                    <!-- Header -->
+                    <div class="auth-header">
+                        <i class="bi bi-shield-check display-4 mb-3"></i>
+                        <h3 class="fw-bold mb-2">Bon retour !</h3>
+                        <p class="mb-0 opacity-75">Connectez-vous à votre compte Kimi Escrow</p>
+                    </div>
+                    
+                    <!-- Body -->
+                    <div class="auth-body">
+                        <form method="post" class="needs-validation" novalidate>
+                            {% csrf_token %}
+                            
+                            <!-- Phone Number -->
+                            <div class="form-floating mb-3">
+                                {{ form.username }}
+                                <label for="{{ form.username.id_for_label }}">
+                                    <i class="bi bi-telephone me-2"></i>{{ form.username.label }}
+                                </label>
+                                {% if form.username.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.username.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Password -->
+                            <div class="form-floating mb-3">
+                                {{ form.password }}
+                                <label for="{{ form.password.id_for_label }}">
+                                    <i class="bi bi-lock me-2"></i>{{ form.password.label }}
+                                </label>
+                                <div class="password-toggle">
+                                    <button type="button" class="btn btn-link position-absolute end-0 top-50 translate-middle-y me-3" 
+                                            onclick="togglePassword('{{ form.password.id_for_label }}')">
+                                        <i class="bi bi-eye" id="password-toggle-icon"></i>
+                                    </button>
+                                </div>
+                                {% if form.password.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.password.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Remember Me & Forgot Password -->
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <div class="form-check">
+                                    {{ form.remember_me }}
+                                    <label class="form-check-label" for="{{ form.remember_me.id_for_label }}">
+                                        {{ form.remember_me.label }}
+                                    </label>
+                                </div>
+                                <a href="{% url 'password_reset' %}" class="text-decoration-none">
+                                    Mot de passe oublié ?
+                                </a>
+                            </div>
+                            
+                            <!-- Non-field errors -->
+                            {% if form.non_field_errors %}
+                                <div class="alert alert-danger">
+                                    <i class="bi bi-exclamation-triangle me-2"></i>
+                                    {{ form.non_field_errors.0 }}
+                                </div>
+                            {% endif %}
+                            
+                            <!-- Submit Button -->
+                            <button type="submit" class="btn btn-primary w-100 py-3 fw-bold">
+                                <i class="bi bi-box-arrow-in-right me-2"></i>
+                                Se connecter
+                            </button>
+                        </form>
+                        
+                        <!-- Social Login (Placeholder) -->
+                        <div class="social-login text-center">
+                            <p class="text-muted mb-3">Ou connectez-vous avec</p>
+                            <div class="d-flex gap-2 justify-content-center">
+                                <button class="btn btn-outline-danger flex-fill" disabled>
+                                    <i class="bi bi-google me-2"></i>Google
+                                </button>
+                                <button class="btn btn-outline-primary flex-fill" disabled>
+                                    <i class="bi bi-facebook me-2"></i>Facebook
+                                </button>
+                            </div>
+                            <small class="text-muted d-block mt-2">Bientôt disponible</small>
+                        </div>
+                        
+                        <!-- Sign up link -->
+                        <div class="text-center mt-4">
+                            <p class="text-muted mb-0">
+                                Pas encore de compte ?
+                                <a href="{% url 'register' %}" class="text-decoration-none fw-bold">
+                                    Créer un compte
+                                </a>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Help Section -->
+                <div class="text-center mt-4">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <a href="#" class="text-decoration-none text-muted">
+                                <i class="bi bi-question-circle me-1"></i>
+                                Centre d'aide
+                            </a>
+                        </div>
+                        <div class="col-md-4">
+                            <a href="#" class="text-decoration-none text-muted">
+                                <i class="bi bi-shield-check me-1"></i>
+                                Sécurité
+                            </a>
+                        </div>
+                        <div class="col-md-4">
+                            <a href="#" class="text-decoration-none text-muted">
+                                <i class="bi bi-telephone me-1"></i>
+                                Support
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Toggle password visibility
+function togglePassword(fieldId) {
+    const passwordField = document.getElementById(fieldId);
+    const toggleIcon = document.getElementById('password-toggle-icon');
+    
+    if (passwordField.type === 'password') {
+        passwordField.type = 'text';
+        toggleIcon.className = 'bi bi-eye-slash';
+    } else {
+        passwordField.type = 'password';
+        toggleIcon.className = 'bi bi-eye';
+    }
+}
+
+// Form validation
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('.needs-validation');
+    
+    if (form) {
+        form.addEventListener('submit', function(event) {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            
+            form.classList.add('was-validated');
+        });
+    }
+    
+    // Auto-focus first input
+    const firstInput = form.querySelector('input:first-of-type');
+    if (firstInput) {
+        firstInput.focus();
+    }
+    
+    // Phone number formatting
+    const phoneInput = document.getElementById('{{ form.username.id_for_label }}');
+    if (phoneInput) {
+        phoneInput.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            
+            // Auto-add +237 if user starts typing numbers
+            if (value.length > 0 && !value.startsWith('237')) {
+                if (value.length === 9) {
+                    value = '237' + value;
+                }
+            }
+            
+            // Format as +237XXXXXXXXX
+            if (value.startsWith('237') && value.length >= 3) {
+                value = '+237' + value.substring(3);
+            }
+            
+            e.target.value = value;
+        });
+    }
+    
+    // Show loading state on submit
+    form.addEventListener('submit', function() {
+        const submitBtn = form.querySelector('button[type="submit"]');
+        if (submitBtn) {
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Connexion...';
+            submitBtn.disabled = true;
+        }
+    });
+});
+</script>
+{% endblock %}
