@@ -4,8 +4,8 @@
 
 ### **Ports Externes (Accessibles depuis l'extérieur)**
 - **Port 8003** → Application Django (interne: 8000)
-- **Port 5435** → PostgreSQL (interne: 5432)
-- **Port 6380** → Redis (interne: 6379)
+- **Port 5437** → PostgreSQL (interne: 5432)
+- **Port 6382** → Redis (interne: 6379)
 - **Port 8080** → Nginx HTTP (interne: 80)
 - **Port 8443** → Nginx HTTPS (interne: 443)
 
@@ -24,8 +24,8 @@
 - **API Swagger** : http://localhost:8003/swagger/
 
 ### **Services de Base**
-- **Base de données** : localhost:5435
-- **Redis** : localhost:6380
+- **Base de données** : localhost:5437
+- **Redis** : localhost:6382
 
 ### **Proxy Nginx**
 - **HTTP** : http://localhost:8080
@@ -38,11 +38,11 @@
 services:
   db:
     ports:
-      - "5435:5432"  # Externe:Interne
+      - "5437:5432"  # Externe:Interne
   
   redis:
     ports:
-      - "6380:6379"  # Externe:Interne
+      - "6382:6379"  # Externe:Interne
   
   web:
     ports:
@@ -59,11 +59,11 @@ services:
 services:
   db:
     ports:
-      - "5435:5432"
+      - "5437:5432"
   
   redis:
     ports:
-      - "6380:6379"
+      - "6382:6379"
   
   web:
     ports:
@@ -97,7 +97,7 @@ REDIS_URL=redis://redis:6379/0  # Port interne Docker
 ### **Vérification manuelle**
 ```bash
 # Vérifier les ports ouverts
-sudo netstat -tulpn | grep -E ':(8003|5435|6380|8080|8443)'
+sudo netstat -tulpn | grep -E ':(8003|5437|6382|8080|8443)'
 
 # Tester l'application
 curl http://localhost:8003/api/core/health/
@@ -135,15 +135,15 @@ sudo systemctl disable redis-server
 
 ### **Changements Effectués**
 1. ✅ Port 8000 → 8003 (Application)
-2. ✅ Port 5434 → 5435 (PostgreSQL)
-3. ✅ Port 6381 → 6380 (Redis)
+2. ✅ Port 5434 → 5437 (PostgreSQL)
+3. ✅ Port 6381 → 6382 (Redis)
 4. ✅ Port 80 → 8080 (Nginx HTTP)
 5. ✅ Port 443 → 8443 (Nginx HTTPS)
 
 ### **URLs Mises à Jour**
 - **Ancien** : http://localhost:8000 → **Nouveau** : http://localhost:8003
-- **Ancien** : localhost:5434 → **Nouveau** : localhost:5435
-- **Ancien** : localhost:6381 → **Nouveau** : localhost:6380
+- **Ancien** : localhost:5434 → **Nouveau** : localhost:5437
+- **Ancien** : localhost:6381 → **Nouveau** : localhost:6382
 
 ## 🔒 Sécurité
 

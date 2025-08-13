@@ -45,18 +45,18 @@ else
     echo "❌ Port 8003 fermé"
 fi
 
-echo "Port 5435 (PostgreSQL):"
-if netstat -tuln | grep ":5435 " > /dev/null; then
-    echo "✅ Port 5435 ouvert"
+echo "Port 5437 (PostgreSQL):"
+if netstat -tuln | grep ":5437 " > /dev/null; then
+    echo "✅ Port 5437 ouvert"
 else
-    echo "❌ Port 5435 fermé"
+    echo "❌ Port 5437 fermé"
 fi
 
-echo "Port 6380 (Redis):"
-if netstat -tuln | grep ":6380 " > /dev/null; then
-    echo "✅ Port 6380 ouvert"
+echo "Port 6382 (Redis):"
+if netstat -tuln | grep ":6382 " > /dev/null; then
+    echo "✅ Port 6382 ouvert"
 else
-    echo "❌ Port 6380 fermé"
+    echo "❌ Port 6382 fermé"
 fi
 
 echo "Port 80 (Nginx):"

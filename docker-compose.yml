@@ -10,7 +10,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
-      - "5435:5432"  # Port externe 5435 pour éviter le conflit
+      - "5437:5432"  # Port externe 5437 pour éviter le conflit
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
@@ -20,7 +20,7 @@ services:
   redis:
     image: redis:7-alpine
     ports:
-      - "6380:6379"
+      - "6382:6379"
     volumes:
       - redis_data:/data
     healthcheck:
