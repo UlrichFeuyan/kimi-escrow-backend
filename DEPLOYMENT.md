@@ -40,7 +40,7 @@
 - **Admin Django**: http://localhost:8000/admin/
 - **API Swagger**: http://localhost:8000/swagger/
 - **Base de données**: localhost:5434
-- **Redis**: localhost:6379
+- **Redis**: localhost:6381
 
 ### Option 2: Développement local
 
@@ -58,7 +58,7 @@
    docker run --name postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=kimi_escrow -p 5432:5432 -d postgres:15
    
    # Redis
-   docker run --name redis -p 6379:6379 -d redis:7-alpine
+   docker run --name redis -p 6381:6379 -d redis:7-alpine
    ```
 
 2. **Démarrer l'application**
@@ -81,7 +81,7 @@ DB_PORT=5432
 
 #### Redis
 ```bash
-REDIS_URL=redis://localhost:6379/0  # ou redis://redis:6379/0 pour Docker
+REDIS_URL=redis://localhost:6381/0  # ou redis://redis:6381/0 pour Docker
 ```
 
 #### Sécurité

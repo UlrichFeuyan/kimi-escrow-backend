@@ -38,9 +38,9 @@ fi
 # Vérifier que Redis est en cours d'exécution
 echo "🔴 Vérification de Redis..."
 if ! redis-cli ping > /dev/null 2>&1; then
-    echo "⚠️  Redis n'est pas accessible sur localhost:6379"
+    echo "⚠️  Redis n'est pas accessible sur localhost:6381"
     echo "Veuillez démarrer Redis ou utiliser Docker:"
-    echo "docker run --name redis -p 6379:6379 -d redis:7-alpine"
+    echo "docker run --name redis -p 6381:6379 -d redis:7-alpine"
     echo ""
     read -p "Voulez-vous continuer sans Redis? (y/N): " -n 1 -r
     echo

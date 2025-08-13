@@ -23,7 +23,7 @@ services:
   redis:
     image: redis:7-alpine
     ports:
-      - "6379:6379"
+      - "6381:6379"
     volumes:
       - redis_data:/data
     healthcheck:
@@ -51,7 +51,7 @@ services:
       - DEBUG=False
       - DB_HOST=db
       - DB_PORT=5432
-      - REDIS_URL=redis://redis:6379/0
+      - REDIS_URL=redis://redis:6381/0
     depends_on:
       db:
         condition: service_healthy
@@ -80,7 +80,7 @@ services:
       - DEBUG=False
       - DB_HOST=db
       - DB_PORT=5432
-      - REDIS_URL=redis://redis:6379/0
+      - REDIS_URL=redis://redis:6381/0
     depends_on:
       - db
       - redis
@@ -106,7 +106,7 @@ services:
       - DEBUG=False
       - DB_HOST=db
       - DB_PORT=5432
-      - REDIS_URL=redis://redis:6379/0
+      - REDIS_URL=redis://redis:6381/0
     depends_on:
       - db
       - redis

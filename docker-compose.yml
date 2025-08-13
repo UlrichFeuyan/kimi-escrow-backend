@@ -20,7 +20,7 @@ services:
   redis:
     image: redis:7-alpine
     ports:
-      - "6379:6379"
+      - "6381:6379"
     volumes:
       - redis_data:/data
     healthcheck:
@@ -46,7 +46,7 @@ services:
       - DB_NAME=kimi_escrow
       - DB_USER=postgres
       - DB_PASSWORD=postgres
-      - REDIS_URL=redis://redis:6379/0
+      - REDIS_URL=redis://redis:6381/0
     depends_on:
       db:
         condition: service_healthy
@@ -73,7 +73,7 @@ services:
       - DB_NAME=kimi_escrow
       - DB_USER=postgres
       - DB_PASSWORD=postgres
-      - REDIS_URL=redis://redis:6379/0
+      - REDIS_URL=redis://redis:6381/0
     depends_on:
       - db
       - redis
@@ -97,7 +97,7 @@ services:
       - DB_NAME=kimi_escrow
       - DB_USER=postgres
       - DB_PASSWORD=postgres
-      - REDIS_URL=redis://redis:6379/0
+      - REDIS_URL=redis://redis:6381/0
     depends_on:
       - db
       - redis

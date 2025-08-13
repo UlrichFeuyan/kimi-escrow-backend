@@ -52,11 +52,11 @@ else
     echo "❌ Port 5434 fermé"
 fi
 
-echo "Port 6379 (Redis):"
-if netstat -tuln | grep ":6379 " > /dev/null; then
-    echo "✅ Port 6379 ouvert"
+echo "Port 6381 (Redis):"
+if netstat -tuln | grep ":6381 " > /dev/null; then
+    echo "✅ Port 6381 ouvert"
 else
-    echo "❌ Port 6379 fermé"
+    echo "❌ Port 6381 fermé"
 fi
 
 echo "Port 80 (Nginx):"

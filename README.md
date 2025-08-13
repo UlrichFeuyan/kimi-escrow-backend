@@ -69,7 +69,7 @@ DB_HOST=localhost
 DB_PORT=5432
 
 # Redis Configuration
-REDIS_URL=redis://localhost:6379/0
+REDIS_URL=redis://localhost:6381/0
 
 # Smile ID Configuration (Cameroon)
 SMILE_ID_PARTNER_ID=your-smile-id-partner-id
@@ -462,7 +462,7 @@ transactions = EscrowTransaction.objects.select_related(
 CACHES = {
     'default': {
         'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': 'redis://127.0.0.1:6379/1',
+        'LOCATION': 'redis://127.0.0.1:6381/1',
     }
 }
 ```
