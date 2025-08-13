@@ -81,7 +81,7 @@ DB_PORT=5432
 
 #### Redis
 ```bash
-REDIS_URL=redis://localhost:6381/0  # ou redis://redis:6381/0 pour Docker
+REDIS_URL=redis://localhost:6382/0  # ou redis://redis:6379/0 pour Docker
 ```
 
 #### Sécurité
