@@ -28,5 +28,5 @@ docker-compose ps
 
 echo ""
 echo "🎉 Déploiement terminé!"
-echo "📱 Application: http://localhost:8000"
+echo "📱 Application: http://localhost:8003"
 echo "🔧 Logs: docker-compose logs -f"

@@ -23,6 +23,6 @@ docker-compose ps
 
 echo ""
 echo "🎉 Prêt!"
-echo "📱 http://localhost:8000"
+echo "📱 http://localhost:8003"
 echo "👤 Admin: admin / admin123"
 echo "🔧 Logs: docker-compose logs -f"

@@ -38,25 +38,25 @@ fi
 # Vérifier les ports
 echo ""
 echo "🔌 Vérification des ports:"
-echo "Port 8000 (Application):"
-if netstat -tuln | grep ":8000 " > /dev/null; then
-    echo "✅ Port 8000 ouvert"
+echo "Port 8003 (Application):"
+if netstat -tuln | grep ":8003 " > /dev/null; then
+    echo "✅ Port 8003 ouvert"
 else
-    echo "❌ Port 8000 fermé"
+    echo "❌ Port 8003 fermé"
 fi
 
-echo "Port 5434 (PostgreSQL):"
-if netstat -tuln | grep ":5434 " > /dev/null; then
-    echo "✅ Port 5434 ouvert"
+echo "Port 5435 (PostgreSQL):"
+if netstat -tuln | grep ":5435 " > /dev/null; then
+    echo "✅ Port 5435 ouvert"
 else
-    echo "❌ Port 5434 fermé"
+    echo "❌ Port 5435 fermé"
 fi
 
-echo "Port 6381 (Redis):"
-if netstat -tuln | grep ":6381 " > /dev/null; then
-    echo "✅ Port 6381 ouvert"
+echo "Port 6380 (Redis):"
+if netstat -tuln | grep ":6380 " > /dev/null; then
+    echo "✅ Port 6380 ouvert"
 else
-    echo "❌ Port 6381 fermé"
+    echo "❌ Port 6380 fermé"
 fi
 
 echo "Port 80 (Nginx):"
@@ -70,15 +70,15 @@ fi
 echo ""
 echo "🏥 Vérification de la santé de l'application:"
 if command -v curl &> /dev/null; then
-    if curl -f http://localhost:8000/api/core/health/ > /dev/null 2>&1; then
-        echo "✅ Application accessible sur http://localhost:8000"
+    if curl -f http://localhost:8003/api/core/health/ > /dev/null 2>&1; then
+        echo "✅ Application accessible sur http://localhost:8003"
         
         # Test de l'API
         echo "📡 Test de l'API:"
-        response=$(curl -s http://localhost:8000/api/core/health/)
+        response=$(curl -s http://localhost:8003/api/core/health/)
         echo "Réponse: $response"
     else
-        echo "❌ Application non accessible sur http://localhost:8000"
+        echo "❌ Application non accessible sur http://localhost:8003"
     fi
 else
     echo "⚠️  curl n'est pas installé, impossible de tester l'API"
