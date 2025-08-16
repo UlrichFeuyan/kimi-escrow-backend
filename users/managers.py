@@ -7,29 +7,26 @@ class CustomUserManager(BaseUserManager):
     Gestionnaire personnalisé pour le modèle CustomUser
     """
     
-    def create_user(self, phone_number, password=None, **extra_fields):
+    def create_user(self, email, password=None, **extra_fields):
         """
-        Créer et sauvegarder un utilisateur avec le numéro de téléphone donné et le mot de passe.
+        Créer et sauvegarder un utilisateur avec l'email donné et le mot de passe.
         """
-        if not phone_number:
-            raise ValueError('Le numéro de téléphone doit être défini')
+        if not email:
+            raise ValueError('L\'email doit être défini')
         
-        # Normaliser le numéro de téléphone
-        from core.utils import sanitize_phone_number
-        phone_number = sanitize_phone_number(phone_number)
+        # Normaliser l'email
+        email = self.normalize_email(email)
         
-        user = self.model(phone_number=phone_number, **extra_fields)
+        user = self.model(email=email, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
         
         # Le profil utilisateur sera créé automatiquement par les signals
-        pass
-        
         return user
     
-    def create_superuser(self, phone_number, password=None, **extra_fields):
+    def create_superuser(self, email, password=None, **extra_fields):
         """
-        Créer et sauvegarder un superutilisateur avec le numéro de téléphone donné et le mot de passe.
+        Créer et sauvegarder un superutilisateur avec l'email donné et le mot de passe.
         """
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
@@ -42,13 +39,13 @@ class CustomUserManager(BaseUserManager):
         if extra_fields.get('is_superuser') is not True:
             raise ValueError('Le superutilisateur doit avoir is_superuser=True.')
         
-        return self.create_user(phone_number, password, **extra_fields)
+        return self.create_user(email, password, **extra_fields)
     
     def get_by_natural_key(self, username):
         """
-        Obtenir un utilisateur par son identifiant naturel (phone_number)
+        Obtenir un utilisateur par son identifiant naturel (email)
         """
-        return self.get(phone_number=username)
+        return self.get(email=username)
     
     def verified_users(self):
         """

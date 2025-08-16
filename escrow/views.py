@@ -315,3 +315,324 @@ def transaction_statistics(request):
         'data': stats,
         'timestamp': timezone.now().isoformat()
     })
+
+
+class FaceToFaceMeetingView(APIView, APIResponseMixin):
+    """Gestion des rencontres face-à-face"""
+    permission_classes = [permissions.IsAuthenticated, IsTransactionParticipant]
+    
+    def get_transaction(self):
+        try:
+            return EscrowTransaction.objects.get(
+                id=self.kwargs['pk'],
+                transaction_type='FACE_TO_FACE',
+                **{Q(buyer=self.request.user) | Q(seller=self.request.user): True}
+            )
+        except EscrowTransaction.DoesNotExist:
+            return None
+    
+    def post(self, request, pk):
+        """Actions sur une rencontre face-à-face"""
+        transaction_obj = self.get_transaction()
+        if not transaction_obj:
+            return self.error_response("Transaction face-à-face non trouvée", status_code=404)
+        
+        action = request.data.get('action')
+        
+        if action == 'start_meeting':
+            return self._start_meeting(transaction_obj, request)
+        elif action == 'complete_meeting':
+            return self._complete_meeting(transaction_obj, request)
+        elif action == 'submit_proof':
+            return self._submit_proof(transaction_obj, request)
+        else:
+            return self.error_response("Action non supportée")
+    
+    def _start_meeting(self, transaction_obj, request):
+        """Démarrer une rencontre"""
+        try:
+            face_to_face = transaction_obj.face_to_face_details
+            face_to_face.meeting_status = 'IN_PROGRESS'
+            face_to_face.save()
+            
+            # Créer un message système
+            TransactionMessage.objects.create(
+                transaction=transaction_obj,
+                sender=request.user,
+                message="Rencontre face-à-face démarrée",
+                is_system_message=True
+            )
+            
+            return self.success_response({
+                'message': 'Rencontre démarrée',
+                'meeting_status': face_to_face.meeting_status
+            })
+        except Exception as e:
+            logger.error(f"Erreur démarrage rencontre: {e}")
+            return self.error_response("Erreur lors du démarrage de la rencontre")
+    
+    def _complete_meeting(self, transaction_obj, request):
+        """Terminer une rencontre"""
+        try:
+            face_to_face = transaction_obj.face_to_face_details
+            face_to_face.meeting_status = 'COMPLETED'
+            face_to_face.save()
+            
+            # Marquer comme livré
+            transaction_obj.status = 'DELIVERED'
+            transaction_obj.delivered_at = timezone.now()
+            transaction_obj.save()
+            
+            # Créer un message système
+            TransactionMessage.objects.create(
+                transaction=transaction_obj,
+                sender=request.user,
+                message="Rencontre face-à-face terminée - Transaction livrée",
+                is_system_message=True
+            )
+            
+            return self.success_response({
+                'message': 'Rencontre terminée et transaction livrée',
+                'transaction_status': transaction_obj.status
+            })
+        except Exception as e:
+            logger.error(f"Erreur fin rencontre: {e}")
+            return self.error_response("Erreur lors de la finalisation de la rencontre")
+    
+    def _submit_proof(self, transaction_obj, request):
+        """Soumettre une preuve de rencontre"""
+        try:
+            proof_type = request.data.get('proof_type')
+            title = request.data.get('title')
+            description = request.data.get('description', '')
+            latitude = request.data.get('latitude')
+            longitude = request.data.get('longitude')
+            location_address = request.data.get('location_address', '')
+            
+            proof = Proof.objects.create(
+                transaction=transaction_obj,
+                proof_type=proof_type,
+                title=title,
+                description=description,
+                latitude=latitude,
+                longitude=longitude,
+                location_address=location_address,
+                submitted_by=request.user
+            )
+            
+            # Mettre à jour les détails face-à-face
+            face_to_face = transaction_obj.face_to_face_details
+            if proof_type == 'FACE_TO_FACE_INITIAL':
+                face_to_face.initial_proof = proof
+            elif proof_type == 'FACE_TO_FACE_FINAL':
+                face_to_face.final_proof = proof
+            face_to_face.save()
+            
+            return self.success_response({
+                'message': 'Preuve soumise avec succès',
+                'proof_id': proof.id
+            })
+        except Exception as e:
+            logger.error(f"Erreur soumission preuve: {e}")
+            return self.error_response("Erreur lors de la soumission de la preuve")
+
+
+class MilestoneManagementView(APIView, APIResponseMixin):
+    """Gestion des jalons"""
+    permission_classes = [permissions.IsAuthenticated, IsTransactionParticipant]
+    
+    def get_milestone(self):
+        try:
+            return Milestone.objects.get(
+                id=self.kwargs['milestone_id'],
+                transaction__id=self.kwargs['pk'],
+                **{Q(transaction__buyer=self.request.user) | Q(transaction__seller=self.request.user): True}
+            )
+        except Milestone.DoesNotExist:
+            return None
+    
+    def post(self, request, pk, milestone_id):
+        """Actions sur un jalon"""
+        milestone = self.get_milestone()
+        if not milestone:
+            return self.error_response("Jalon non trouvé", status_code=404)
+        
+        serializer = MilestoneActionSerializer(
+            data=request.data,
+            context={'milestone': milestone, 'request': request}
+        )
+        
+        if serializer.is_valid():
+            action = serializer.validated_data['action']
+            notes = serializer.validated_data.get('notes', '')
+            
+            try:
+                with transaction.atomic():
+                    if action == 'complete':
+                        result = self._complete_milestone(milestone, notes)
+                    elif action == 'approve':
+                        result = self._approve_milestone(milestone, notes)
+                    elif action == 'reject':
+                        result = self._reject_milestone(milestone, notes)
+                    else:
+                        return self.error_response("Action non supportée")
+                    
+                    return self.success_response(result)
+                    
+            except Exception as e:
+                logger.error(f"Erreur action jalon {milestone_id}: {e}")
+                return self.error_response(
+                    "Erreur lors de l'exécution de l'action",
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+        
+        return self.error_response("Données invalides", errors=serializer.errors)
+    
+    def _complete_milestone(self, milestone, notes):
+        """Marquer un jalon comme terminé"""
+        milestone.status = 'COMPLETED'
+        milestone.completed_at = timezone.now()
+        milestone.completed_by = self.request.user
+        milestone.completion_notes = notes
+        milestone.save()
+        
+        send_milestone_notification.delay(
+            milestone.id,
+            'completed',
+            f"Jalon terminé: {notes}"
+        )
+        
+        return {
+            'message': 'Jalon marqué comme terminé',
+            'milestone': MilestoneSerializer(milestone).data
+        }
+    
+    def _approve_milestone(self, milestone, notes):
+        """Approuver un jalon"""
+        milestone.status = 'APPROVED'
+        milestone.approved_at = timezone.now()
+        milestone.approved_by = self.request.user
+        milestone.approval_notes = notes
+        milestone.save()
+        
+        # Libérer les fonds du jalon
+        # TODO: Implémenter la logique de libération des fonds
+        
+        send_milestone_notification.delay(
+            milestone.id,
+            'approved',
+            f"Jalon approuvé: {notes}"
+        )
+        
+        return {
+            'message': 'Jalon approuvé',
+            'milestone': MilestoneSerializer(milestone).data
+        }
+    
+    def _reject_milestone(self, milestone, notes):
+        """Rejeter un jalon"""
+        milestone.status = 'REJECTED'
+        milestone.approval_notes = notes
+        milestone.save()
+        
+        send_milestone_notification.delay(
+            milestone.id,
+            'rejected',
+            f"Jalon rejeté: {notes}"
+        )
+        
+        return {
+            'message': 'Jalon rejeté',
+            'milestone': MilestoneSerializer(milestone).data
+        }
+
+
+class InternationalTransactionView(APIView, APIResponseMixin):
+    """Gestion des transactions internationales"""
+    permission_classes = [permissions.IsAuthenticated, IsTransactionParticipant]
+    
+    def get_transaction(self):
+        try:
+            return EscrowTransaction.objects.get(
+                id=self.kwargs['pk'],
+                transaction_type='INTERNATIONAL',
+                **{Q(buyer=self.request.user) | Q(seller=self.request.user): True}
+            )
+        except EscrowTransaction.DoesNotExist:
+            return None
+    
+    def post(self, request, pk):
+        """Actions sur une transaction internationale"""
+        transaction_obj = self.get_transaction()
+        if not transaction_obj:
+            return self.error_response("Transaction internationale non trouvée", status_code=404)
+        
+        action = request.data.get('action')
+        
+        if action == 'update_tracking':
+            return self._update_tracking(transaction_obj, request)
+        elif action == 'submit_documents':
+            return self._submit_documents(transaction_obj, request)
+        elif action == 'extend_inspection':
+            return self._extend_inspection(transaction_obj, request)
+        else:
+            return self.error_response("Action non supportée")
+    
+    def _update_tracking(self, transaction_obj, request):
+        """Mettre à jour les informations de suivi"""
+        try:
+            international = transaction_obj.international_details
+            international.tracking_number = request.data.get('tracking_number', international.tracking_number)
+            international.tracking_url = request.data.get('tracking_url', international.tracking_url)
+            international.save()
+            
+            return self.success_response({
+                'message': 'Informations de suivi mises à jour',
+                'tracking_number': international.tracking_number,
+                'tracking_url': international.tracking_url
+            })
+        except Exception as e:
+            logger.error(f"Erreur mise à jour suivi: {e}")
+            return self.error_response("Erreur lors de la mise à jour du suivi")
+    
+    def _submit_documents(self, transaction_obj, request):
+        """Soumettre des documents internationaux"""
+        try:
+            international = transaction_obj.international_details
+            international.invoice_number = request.data.get('invoice_number', international.invoice_number)
+            international.certificate_number = request.data.get('certificate_number', international.certificate_number)
+            international.bill_of_lading = request.data.get('bill_of_lading', international.bill_of_lading)
+            international.save()
+            
+            return self.success_response({
+                'message': 'Documents soumis avec succès',
+                'documents': {
+                    'invoice_number': international.invoice_number,
+                    'certificate_number': international.certificate_number,
+                    'bill_of_lading': international.bill_of_lading
+                }
+            })
+        except Exception as e:
+            logger.error(f"Erreur soumission documents: {e}")
+            return self.error_response("Erreur lors de la soumission des documents")
+    
+    def _extend_inspection(self, transaction_obj, request):
+        """Prolonger la période d'inspection"""
+        try:
+            international = transaction_obj.international_details
+            additional_days = request.data.get('additional_days', 2)
+            
+            if international.inspection_deadline:
+                international.inspection_deadline += timezone.timedelta(days=additional_days)
+            else:
+                international.inspection_deadline = timezone.now() + timezone.timedelta(days=additional_days)
+            
+            international.save()
+            
+            return self.success_response({
+                'message': f'Période d\'inspection prolongée de {additional_days} jours',
+                'new_deadline': international.inspection_deadline.strftime("%d/%m/%Y %H:%M")
+            })
+        except Exception as e:
+            logger.error(f"Erreur prolongation inspection: {e}")
+            return self.error_response("Erreur lors de la prolongation de la période d'inspection")

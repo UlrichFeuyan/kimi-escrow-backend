@@ -11,10 +11,9 @@ class CustomUser(AbstractUser):
     Modèle utilisateur personnalisé avec rôles et KYC
     """
     ROLE_CHOICES = [
-        ('BUYER', 'Acheteur'),
-        ('SELLER', 'Vendeur'),
-        ('ARBITRE', 'Arbitre'),
         ('ADMIN', 'Administrateur'),
+        ('ARBITRE', 'Arbitre'),
+        ('USER', 'Utilisateur'),
     ]
     
     KYC_STATUS_CHOICES = [
@@ -26,10 +25,10 @@ class CustomUser(AbstractUser):
         ('EXPIRED', 'Expiré'),
     ]
     
-    # Utiliser phone_number comme identifiant unique au lieu d'username
+    # Utiliser email comme identifiant unique au lieu de phone_number
     username = None
-    phone_number = models.CharField(max_length=20, unique=True)
-    email = models.EmailField(blank=True, null=True)
+    phone_number = models.CharField(max_length=20, blank=True, null=True)
+    email = models.EmailField(unique=True)
     
     # Informations personnelles
     first_name = models.CharField(max_length=150)
@@ -37,7 +36,7 @@ class CustomUser(AbstractUser):
     date_of_birth = models.DateField(null=True, blank=True)
     
     # Rôle et statut
-    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='BUYER')
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='USER')
     is_phone_verified = models.BooleanField(default=False)
     phone_verification_token = models.CharField(max_length=6, blank=True)
     phone_verification_expires_at = models.DateTimeField(null=True, blank=True)
@@ -72,12 +71,16 @@ class CustomUser(AbstractUser):
     mfa_enabled = models.BooleanField(default=False)
     mfa_secret = models.CharField(max_length=32, blank=True)
     
+    # Réinitialisation de mot de passe
+    password_reset_token = models.CharField(max_length=6, null=True, blank=True)
+    password_reset_expires_at = models.DateTimeField(null=True, blank=True)
+    
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     last_activity = models.DateTimeField(null=True, blank=True)
     
-    USERNAME_FIELD = 'phone_number'
+    USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['first_name', 'last_name']
     
     objects = CustomUserManager()
@@ -99,13 +102,29 @@ class CustomUser(AbstractUser):
     
     def can_create_escrow(self):
         """Vérifier si l'utilisateur peut créer une transaction escrow"""
-        return (self.role in ['BUYER', 'SELLER'] and 
+        return (self.role == 'USER' and 
                 self.kyc_status == 'VERIFIED' and 
                 self.is_phone_verified)
     
     def can_arbitrate(self):
         """Vérifier si l'utilisateur peut arbitrer"""
         return self.role == 'ARBITRE' and self.kyc_status == 'VERIFIED'
+    
+    def can_administer(self):
+        """Vérifier si l'utilisateur peut administrer"""
+        return self.role == 'ADMIN' and self.kyc_status == 'VERIFIED'
+    
+    def is_admin(self):
+        """Vérifier si l'utilisateur est administrateur"""
+        return self.role == 'ADMIN'
+    
+    def is_arbitre(self):
+        """Vérifier si l'utilisateur est arbitre"""
+        return self.role == 'ARBITRE'
+    
+    def is_regular_user(self):
+        """Vérifier si l'utilisateur est un utilisateur classique"""
+        return self.role == 'USER'
     
     def generate_phone_verification_token(self):
         """Générer un token de vérification SMS"""
@@ -117,6 +136,25 @@ class CustomUser(AbstractUser):
         self.phone_verification_expires_at = timezone.now() + timedelta(minutes=10)
         self.save(update_fields=['phone_verification_token', 'phone_verification_expires_at'])
         return self.phone_verification_token
+    
+    def generate_password_reset_token(self):
+        """Générer un token de réinitialisation de mot de passe"""
+        import random
+        from django.utils import timezone
+        from datetime import timedelta
+        
+        self.password_reset_token = str(random.randint(100000, 999999))
+        self.password_reset_expires_at = timezone.now() + timedelta(minutes=15)
+        self.save(update_fields=['password_reset_token', 'password_reset_expires_at'])
+        return self.password_reset_token
+    
+    def verify_password_reset_token(self, token):
+        """Vérifier un token de réinitialisation de mot de passe"""
+        from django.utils import timezone
+        
+        return (self.password_reset_token == token and
+                self.password_reset_expires_at and
+                timezone.now() <= self.password_reset_expires_at)
 
 
 class KYCDocument(TimeStampedModel):

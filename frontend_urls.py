@@ -5,6 +5,7 @@ Version production avec toutes les fonctionnalités
 
 from django.urls import path
 from django.views.generic import TemplateView
+from django.shortcuts import render
 from frontend_views import *
 
 urlpatterns = [
@@ -19,19 +20,20 @@ urlpatterns = [
     
     # ===== PROFIL UTILISATEUR ===== #
     path('profile/', profile_view, name='profile'),
+    path('debug-user/', lambda request: render(request, 'debug_user.html'), name='debug_user'),
     path('change-password/', change_password, name='change_password'),
     
     # ===== RÉINITIALISATION DE MOT DE PASSE ===== #
     path('password-reset/', password_reset, name='password_reset'),
-    path('password-reset/<str:uidb64>/<str:token>/', password_reset_confirm, name='password_reset_confirm'),
+    path('password-reset/code/', password_reset_code, name='password_reset_code'),
+    path('password-reset/confirm/', password_reset_confirm, name='password_reset_confirm'),
     
     # ===== KYC ===== #
     path('kyc/status/', kyc_status, name='kyc_status'),
     path('kyc/upload/', kyc_upload, name='kyc_upload'),
     
     # ===== DASHBOARDS ===== #
-    path('dashboard/buyer/', buyer_dashboard, name='buyer_dashboard'),
-    path('dashboard/seller/', seller_dashboard, name='seller_dashboard'),
+    path('dashboard/user/', user_dashboard, name='user_dashboard'),
     path('dashboard/arbitre/', arbitre_dashboard, name='arbitre_dashboard'),
     path('dashboard/admin/', admin_dashboard, name='admin_dashboard'),
     

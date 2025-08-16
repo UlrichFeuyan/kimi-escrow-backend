@@ -19,7 +19,8 @@ from .models import CustomUser, KYCDocument, UserProfile, LoginAttempt
 from .serializers import (
     UserRegistrationSerializer, UserLoginSerializer, PhoneVerificationSerializer,
     UserProfileSerializer, UserProfileUpdateSerializer, KYCDocumentSerializer,
-    UserExtendedProfileSerializer, PasswordChangeSerializer, AdminUserSerializer
+    UserExtendedProfileSerializer, PasswordChangeSerializer, AdminUserSerializer,
+    PasswordResetRequestSerializer, PasswordResetConfirmSerializer
 )
 from core.permissions import IsAdmin
 from core.utils import APIResponseMixin, send_notification_email
@@ -501,3 +502,200 @@ def user_statistics(request):
     }
     
     return Response({'success': True, 'data': stats, 'timestamp': now.isoformat()})
+
+
+class PasswordResetRequestView(APIView, APIResponseMixin):
+    """Endpoint de demande de réinitialisation de mot de passe"""
+    permission_classes = [permissions.AllowAny]
+    
+    @swagger_auto_schema(
+        operation_summary="Demande de réinitialisation de mot de passe",
+        operation_description="""
+        Demande de réinitialisation de mot de passe par email.
+        
+        **Processus:**
+        1. Validation de l'email
+        2. Génération d'un code de réinitialisation
+        3. Envoi du code par email
+        4. Stockage du code avec expiration
+        
+        **Note:** Le code expire après 15 minutes.
+        """,
+        request_body=PasswordResetRequestSerializer,
+        responses={
+            200: openapi.Response(
+                description="Code de réinitialisation envoyé avec succès",
+                examples={
+                    "application/json": {
+                        "success": True,
+                        "message": "Code de réinitialisation envoyé à votre email.",
+                        "data": {
+                            "email": "user@example.com",
+                            "expires_at": "2025-08-12T08:00:00Z"
+                        },
+                        "timestamp": "2025-08-12T07:30:00Z"
+                    }
+                }
+            ),
+            400: openapi.Response(
+                description="Email invalide ou non trouvé",
+                examples={
+                    "application/json": {
+                        "success": False,
+                        "message": "Aucun compte associé à cette adresse email.",
+                        "errors": {
+                            "email": ["Aucun compte associé à cette adresse email."]
+                        },
+                        "timestamp": "2025-08-12T07:30:00Z"
+                    }
+                }
+            )
+        },
+        tags=['Authentication']
+    )
+    def post(self, request):
+        serializer = PasswordResetRequestSerializer(data=request.data)
+        if serializer.is_valid():
+            try:
+                email = serializer.validated_data['email']
+                user = CustomUser.objects.get(email=email)
+                
+                # Générer et envoyer le code de réinitialisation
+                reset_code = user.generate_password_reset_token()
+                
+                # Envoyer l'email avec le code
+                if user.email:
+                    send_notification_email(
+                        user.email,
+                        "Réinitialisation de mot de passe - Kimi Escrow",
+                        f"""
+                        Bonjour {user.get_full_name()},
+                        
+                        Vous avez demandé la réinitialisation de votre mot de passe.
+                        Votre code de réinitialisation est : {reset_code}
+                        
+                        Ce code expire dans 15 minutes.
+                        Si vous n'avez pas fait cette demande, ignorez cet email.
+                        
+                        Cordialement,
+                        L'équipe Kimi Escrow
+                        """
+                    )
+                
+                return self.success_response({
+                    'message': 'Code de réinitialisation envoyé à votre email.',
+                    'data': {
+                        'email': email,
+                        'expires_at': user.password_reset_expires_at.isoformat() if user.password_reset_expires_at else None
+                    }
+                })
+                
+            except CustomUser.DoesNotExist:
+                return self.error_response("Aucun compte associé à cette adresse email.", status_code=400)
+            except Exception as e:
+                logger.error(f"Erreur réinitialisation mot de passe: {e}")
+                return self.error_response("Erreur lors de l'envoi du code de réinitialisation", status_code=500)
+        
+        return self.error_response("Données invalides", errors=serializer.errors, status_code=400)
+
+
+class PasswordResetConfirmView(APIView, APIResponseMixin):
+    """Endpoint de confirmation de réinitialisation de mot de passe"""
+    permission_classes = [permissions.AllowAny]
+    
+    @swagger_auto_schema(
+        operation_summary="Confirmation de réinitialisation de mot de passe",
+        operation_description="""
+        Confirmation de réinitialisation de mot de passe avec le code reçu.
+        
+        **Processus:**
+        1. Validation du code de réinitialisation
+        2. Vérification de l'expiration
+        3. Mise à jour du mot de passe
+        4. Invalidation du code utilisé
+        
+        **Note:** Le code doit être utilisé dans les 15 minutes.
+        """,
+        request_body=PasswordResetConfirmSerializer,
+        responses={
+            200: openapi.Response(
+                description="Mot de passe mis à jour avec succès",
+                examples={
+                    "application/json": {
+                        "success": True,
+                        "message": "Votre mot de passe a été mis à jour avec succès.",
+                        "data": {
+                            "email": "user@example.com",
+                            "updated_at": "2025-08-12T07:30:00Z"
+                        },
+                        "timestamp": "2025-08-12T07:30:00Z"
+                    }
+                }
+            ),
+            400: openapi.Response(
+                description="Code invalide ou expiré",
+                examples={
+                    "application/json": {
+                        "success": False,
+                        "message": "Code de réinitialisation invalide ou expiré.",
+                        "errors": {
+                            "reset_code": ["Code de réinitialisation invalide ou expiré."]
+                        },
+                        "timestamp": "2025-08-12T07:30:00Z"
+                    }
+                }
+            )
+        },
+        tags=['Authentication']
+    )
+    def post(self, request):
+        serializer = PasswordResetConfirmSerializer(data=request.data)
+        if serializer.is_valid():
+            try:
+                email = serializer.validated_data['email']
+                reset_code = serializer.validated_data['reset_code']
+                new_password = serializer.validated_data['new_password']
+                
+                user = CustomUser.objects.get(email=email)
+                
+                # Vérifier le code de réinitialisation
+                if not user.verify_password_reset_token(reset_code):
+                    return self.error_response("Code de réinitialisation invalide ou expiré", status_code=400)
+                
+                # Mettre à jour le mot de passe
+                user.set_password(new_password)
+                user.password_reset_token = None
+                user.password_reset_expires_at = None
+                user.save(update_fields=['password', 'password_reset_token', 'password_reset_expires_at'])
+                
+                # Envoyer un email de confirmation
+                if user.email:
+                    send_notification_email(
+                        user.email,
+                        "Mot de passe mis à jour - Kimi Escrow",
+                        f"""
+                        Bonjour {user.get_full_name()},
+                        
+                        Votre mot de passe a été mis à jour avec succès.
+                        Si vous n'avez pas fait cette modification, contactez-nous immédiatement.
+                        
+                        Cordialement,
+                        L'équipe Kimi Escrow
+                        """
+                    )
+                
+                return self.success_response({
+                    'message': 'Votre mot de passe a été mis à jour avec succès.',
+                    'data': {
+                        'email': email,
+                        'updated_at': timezone.now().isoformat()
+                    }
+                })
+                
+            except CustomUser.DoesNotExist:
+                return self.error_response("Aucun compte associé à cette adresse email", status_code=400)
+            except Exception as e:
+                logger.error(f"Erreur confirmation réinitialisation: {e}")
+                return self.error_response("Erreur lors de la mise à jour du mot de passe", status_code=500)
+        
+        return self.error_response("Données invalides", errors=serializer.errors, status_code=400)

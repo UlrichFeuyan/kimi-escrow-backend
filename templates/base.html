@@ -71,7 +71,7 @@
         const baseApiUrl = '/api';
         const currentUser = {
             id: {% if user.is_authenticated %}{{ user.id }}{% else %}null{% endif %},
-            role: {% if user.is_authenticated and user.profile %}'{{ user.profile.role }}'{% else %}null{% endif %},
+            role: {% if user.is_authenticated %}'{{ user.role }}'{% else %}null{% endif %},
             isAuthenticated: {{ user.is_authenticated|yesno:"true,false" }}
         };
     </script>

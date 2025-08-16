@@ -1,0 +1,75 @@
+[Unit]
+Description=KIMI Escrow Celery Worker
+Documentation=https://github.com/your-org/kimi-escrow
+After=network.target redis-server.service
+Wants=redis-server.service
+PartOf=kimi_escrow.service
+
+[Service]
+Type=simple
+User=kimi_escrow
+Group=kimi_escrow
+WorkingDirectory=/var/www/kimi-escrow
+Environment=PATH=/var/www/kimi-escrow/venv/bin
+Environment=DJANGO_SETTINGS_MODULE=kimi_escrow.settings_production
+Environment=PYTHONPATH=/var/www/kimi-escrow
+Environment=CELERYD_NODES=w1
+Environment=CELERY_BIN=/var/www/kimi-escrow/venv/bin/celery
+Environment=CELERYD_MULTI=/var/www/kimi-escrow/venv/bin/celery
+Environment=CELERYD_OPTS="--time-limit=300 --concurrency=4"
+Environment=CELERYD_LOG_FILE=/var/www/kimi-escrow/logs/celery_worker.log
+Environment=CELERYD_PID_FILE=/var/www/kimi-escrow/logs/celery_worker.pid
+Environment=CELERYD_LOG_LEVEL=INFO
+
+# Configuration Celery Worker
+ExecStart=/var/www/kimi-escrow/venv/bin/celery \
+    -A kimi_escrow worker \
+    --loglevel=info \
+    --concurrency=4 \
+    --max-tasks-per-child=1000 \
+    --max-memory-per-child=200000 \
+    --prefetch-multiplier=1 \
+    --without-gossip \
+    --without-mingle \
+    --without-heartbeat \
+    --queues=default,escrow,payments,users,disputes,high_priority \
+    --hostname=worker@%h \
+    --pidfile=/var/www/kimi-escrow/logs/celery_worker.pid \
+    --logfile=/var/www/kimi-escrow/logs/celery_worker.log
+
+ExecReload=/bin/kill -s HUP $MAINPID
+KillMode=mixed
+KillSignal=SIGTERM
+TimeoutStopSec=30
+
+# Restart policy
+Restart=always
+RestartSec=10
+StartLimitInterval=60
+StartLimitBurst=3
+
+# Security
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/www/kimi-escrow/logs /var/www/kimi-escrow/media /var/www/kimi-escrow/backups
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+
+# Resource limits
+LimitNOFILE=65536
+LimitNPROC=4096
+MemoryMax=2G
+CPUQuota=300%
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=kimi-escrow-celery
+
+[Install]
+WantedBy=multi-user.target

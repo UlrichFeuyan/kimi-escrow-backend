@@ -32,10 +32,12 @@ def generate_secure_token(length: int = 32) -> str:
     return ''.join(secrets.choice(alphabet) for _ in range(length))
 
 
-def calculate_commission(amount: float) -> float:
+def calculate_commission(amount) -> 'Decimal':
     """Calculer la commission sur un montant"""
-    commission_rate = getattr(settings, 'ESCROW_COMMISSION_RATE', 0.025)
-    return amount * commission_rate
+    from decimal import Decimal
+    commission_rate = Decimal(str(getattr(settings, 'ESCROW_COMMISSION_RATE', 0.025)))
+    amount_decimal = Decimal(str(amount))
+    return amount_decimal * commission_rate
 
 
 def is_amount_valid(amount: float) -> bool:

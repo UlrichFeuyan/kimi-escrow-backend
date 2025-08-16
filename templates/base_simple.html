@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kimi Escrow</title>
+    <title>{% block title %}Kimi Escrow{% endblock %}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    {% block extra_css %}{% endblock %}
 </head>
 <body>
     <!-- Navigation Simple -->
@@ -15,28 +16,57 @@
                 <i class="bi bi-shield-check me-2"></i>Kimi Escrow
             </a>
             <div class="navbar-nav ms-auto">
-                <a class="nav-link" href="/">Accueil</a>
+                {% if user.is_authenticated %}
+                    <a class="nav-link" href="{% url 'user_dashboard' %}">Dashboard</a>
+                    <a class="nav-link" href="{% url 'profile' %}">Profil</a>
+                    <a class="nav-link" href="{% url 'logout' %}">Déconnexion</a>
+                {% else %}
+                    <a class="nav-link" href="{% url 'login' %}">Connexion</a>
+                    <a class="nav-link" href="{% url 'register' %}">Inscription</a>
+                {% endif %}
                 <a class="nav-link" href="/swagger/">API</a>
                 <a class="nav-link" href="/admin/">Admin</a>
             </div>
         </div>
     </nav>
 
-    <!-- Contenu Principal -->
-    <main class="container-fluid">
-        <div class="content-placeholder">
-            <!-- Le contenu sera injecté ici -->
+    <!-- Messages -->
+    {% if messages %}
+        <div class="container mt-3">
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
         </div>
+    {% endif %}
+
+    <!-- Contenu Principal -->
+    <main>
+        {% block content %}
+        <div class="container-fluid">
+            <div class="content-placeholder">
+                <!-- Le contenu sera injecté ici -->
+            </div>
+        </div>
+        {% endblock %}
     </main>
 
     <!-- Footer Simple -->
     <footer class="bg-dark text-light py-3 mt-auto">
         <div class="container text-center">
-            <p class="mb-0">&copy; 2024 Kimi Escrow - Frontend Django Opérationnel</p>
+            <p class="mb-0">&copy; 2024 Kimi Escrow - Plateforme sécurisée de transactions</p>
         </div>
     </footer>
 
+    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    {% block extra_js %}{% endblock %}
+
+    <!-- Script Simple -->
+    <script>
+        console.log('Kimi Escrow - Template Simple Chargé');
+    </script>
 </body>
 </html>
-

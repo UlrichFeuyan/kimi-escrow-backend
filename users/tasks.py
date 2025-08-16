@@ -6,7 +6,7 @@ import logging
 import os
 
 from .models import KYCDocument
-from .services import sms_service, smile_id_service
+from .services import smile_id_service
 from core.utils import send_notification_email
 
 User = get_user_model()
@@ -20,20 +20,45 @@ def send_verification_sms(self, user_id: int, verification_code: str):
     """
     try:
         user = User.objects.get(id=user_id)
-        success = sms_service.send_verification_sms(user.phone_number, verification_code)
         
-        if success:
-            logger.info(f"SMS de vérification envoyé à {user.phone_number}")
-            return f"SMS envoyé avec succès à {user.phone_number}"
-        else:
-            logger.error(f"Échec envoi SMS à {user.phone_number}")
-            raise Exception("Échec envoi SMS")
+        # Pour l'instant, on simule l'envoi SMS
+        # TODO: Implémenter l'intégration avec un service SMS réel
+        logger.info(f"SMS de vérification simulé pour {user.phone_number}: {verification_code}")
+        return f"SMS simulé avec succès à {user.phone_number}"
             
     except User.DoesNotExist:
         logger.error(f"Utilisateur {user_id} non trouvé pour l'envoi SMS")
         return "Utilisateur non trouvé"
     except Exception as e:
         logger.error(f"Erreur lors de l'envoi SMS: {e}")
+        # Retry avec backoff exponentiel
+        raise self.retry(countdown=60 * (2 ** self.request.retries))
+
+
+@shared_task(bind=True, max_retries=3)
+def send_password_reset_email(self, user_id: int, reset_code: str):
+    """
+    Tâche asynchrone pour envoyer un email de réinitialisation de mot de passe avec template HTML
+    """
+    try:
+        user = User.objects.get(id=user_id)
+        
+        # Utiliser le nouveau service d'email professionnel
+        from core.email_service import EmailService
+        success = EmailService.send_password_reset_email(user, reset_code)
+        
+        if success:
+            logger.info(f"Email de réinitialisation HTML envoyé à {user.email}")
+            return f"Email de réinitialisation envoyé avec succès à {user.email}"
+        else:
+            logger.error(f"Échec envoi email de réinitialisation à {user.email}")
+            raise Exception("Échec envoi email de réinitialisation")
+            
+    except User.DoesNotExist:
+        logger.error(f"Utilisateur {user_id} non trouvé pour l'envoi email de réinitialisation")
+        return "Utilisateur non trouvé"
+    except Exception as e:
+        logger.error(f"Erreur lors de l'envoi email de réinitialisation: {e}")
         # Retry avec backoff exponentiel
         raise self.retry(countdown=60 * (2 ** self.request.retries))
 
@@ -295,10 +320,10 @@ def send_kyc_reminder():
                 )
             
             # Aussi envoyer un SMS si possible
-            sms_service.send_notification_sms(
-                user.phone_number,
-                "Kimi Escrow: Votre vérification d'identité est requise pour utiliser nos services. Connectez-vous à votre compte."
-            )
+            # sms_service.send_notification_sms(
+            #     user.phone_number,
+            #     "Kimi Escrow: Votre vérification d'identité est requise pour utiliser nos services. Connectez-vous à votre compte."
+            # )
         
         logger.info(f"Rappels KYC envoyés à {users_to_remind.count()} utilisateurs")
         

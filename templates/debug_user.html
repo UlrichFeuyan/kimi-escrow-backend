@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head><title>Debug User</title></head>
+<body>
+    <h1>Debug User Info</h1>
+    <p>Authenticated: {{ user.is_authenticated }}</p>
+    <p>Username: {{ user.username }}</p>
+    <p>Phone: {{ user.phone_number }}</p>
+    <p>ID: {{ user.id }}</p>
+    <p>Role: "{{ user.role }}"</p>
+    <p>Role length: {{ user.role|length }}</p>
+    <p>First name: {{ user.first_name }}</p>
+    <p>Last name: {{ user.last_name }}</p>
+    <p>Has profile: {{ user.profile|yesno:"yes,no" }}</p>
+    {% if user.profile %}
+        <p>Profile role: {{ user.profile.role }}</p>
+    {% endif %}
+</body>
+</html>
+

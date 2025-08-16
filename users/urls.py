@@ -33,4 +33,9 @@ urlpatterns = [
     
     # Refresh token
     path('token/refresh/', views.TokenRefreshView.as_view(), name='token-refresh'),
+    
+    # Réinitialisation de mot de passe
+    path('password-reset/request/', views.PasswordResetRequestView.as_view(), name='password-reset-request'),
+    path('password-reset/confirm/', views.PasswordResetConfirmView.as_view(), name='password-reset-confirm'),
+    
 ] + router.urls

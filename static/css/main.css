@@ -464,6 +464,52 @@ body {
     }
 }
 
+/* ===== CHAMPS DE MOT DE PASSE ===== */
+.form-floating {
+    position: relative;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 10;
+    pointer-events: none;
+}
+
+.password-toggle .btn {
+    pointer-events: auto;
+    padding: 0.25rem;
+    color: #6c757d;
+    background: none;
+    border: none;
+    font-size: 1.1rem;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2rem;
+    height: 2rem;
+    border-radius: 0.25rem;
+    transition: all 0.2s ease;
+}
+
+.password-toggle .btn:hover {
+    color: #007bff;
+    background-color: rgba(0, 123, 255, 0.1);
+}
+
+.password-toggle .btn:focus {
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    outline: none;
+}
+
+.password-toggle .bi {
+    display: block;
+    line-height: 1;
+}
+
 /* ===== UTILITAIRES ===== */
 .text-muted-light {
     color: #8e8e93 !important;
@@ -521,6 +567,8 @@ body {
 .slide-in-up {
     animation: slideInUp 0.5s ease;
 }
+
+
 
 /* ===== DARK MODE ===== */
 [data-bs-theme="dark"] {

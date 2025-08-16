@@ -1,0 +1,65 @@
+[Unit]
+Description=KIMI Escrow Celery Beat Scheduler
+Documentation=https://github.com/your-org/kimi-escrow
+After=network.target redis-server.service
+Wants=redis-server.service
+PartOf=kimi_escrow.service
+
+[Service]
+Type=simple
+User=kimi_escrow
+Group=kimi_escrow
+WorkingDirectory=/var/www/kimi-escrow
+Environment=PATH=/var/www/kimi-escrow/venv/bin
+Environment=DJANGO_SETTINGS_MODULE=kimi_escrow.settings_production
+Environment=PYTHONPATH=/var/www/kimi-escrow
+Environment=CELERY_BIN=/var/www/kimi-escrow/venv/bin/celery
+Environment=CELERYD_LOG_FILE=/var/www/kimi-escrow/logs/celery_beat.log
+Environment=CELERYD_PID_FILE=/var/www/kimi-escrow/logs/celery_beat.pid
+Environment=CELERYD_LOG_LEVEL=INFO
+
+# Configuration Celery Beat
+ExecStart=/var/www/kimi-escrow/venv/bin/celery \
+    -A kimi_escrow beat \
+    --loglevel=info \
+    --scheduler=django_celery_beat.schedulers:DatabaseScheduler \
+    --pidfile=/var/www/kimi-escrow/logs/celery_beat.pid \
+    --logfile=/var/www/kimi-escrow/logs/celery_beat.log \
+    --max-interval=300
+
+ExecReload=/bin/kill -s HUP $MAINPID
+KillMode=mixed
+KillSignal=SIGTERM
+TimeoutStopSec=30
+
+# Restart policy
+Restart=always
+RestartSec=10
+StartLimitInterval=60
+StartLimitBurst=3
+
+# Security
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/www/kimi-escrow/logs /var/www/kimi-escrow/media /var/www/kimi-escrow/backups
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+
+# Resource limits
+LimitNOFILE=65536
+LimitNPROC=1024
+MemoryMax=512M
+CPUQuota=100%
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=kimi-escrow-celerybeat
+
+[Install]
+WantedBy=multi-user.target

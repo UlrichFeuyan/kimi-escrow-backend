@@ -4,6 +4,7 @@ from django.contrib.auth.password_validation import validate_password
 from django.utils import timezone
 from .models import CustomUser, KYCDocument, UserProfile, LoginAttempt
 from core.utils import validate_cameroon_phone, sanitize_phone_number
+from django.core.validators import RegexValidator
 
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
@@ -68,22 +69,22 @@ class UserLoginSerializer(serializers.Serializer):
     """
     Serializer pour la connexion des utilisateurs
     """
-    phone_number = serializers.CharField()
+    email = serializers.EmailField()
     password = serializers.CharField(write_only=True)
     
-    def validate_phone_number(self, value):
-        """Valider et normaliser le numéro de téléphone"""
-        return sanitize_phone_number(value)
+    def validate_email(self, value):
+        """Valider et normaliser l'email"""
+        return value.lower().strip()
     
     def validate(self, attrs):
         """Authentifier l'utilisateur"""
-        phone_number = attrs.get('phone_number')
+        email = attrs.get('email')
         password = attrs.get('password')
         
-        if phone_number and password:
+        if email and password:
             user = authenticate(
                 request=self.context.get('request'),
-                username=phone_number,
+                username=email,
                 password=password
             )
             
@@ -91,6 +92,8 @@ class UserLoginSerializer(serializers.Serializer):
                 # Enregistrer la tentative de connexion échouée
                 request = self.context.get('request')
                 if request:
+                    # Utiliser l'email comme phone_number temporairement
+                    phone_number = email if not user else (user.phone_number or email)
                     LoginAttempt.objects.create(
                         phone_number=phone_number,
                         ip_address=request.META.get('REMOTE_ADDR', ''),
@@ -100,7 +103,7 @@ class UserLoginSerializer(serializers.Serializer):
                     )
                 
                 raise serializers.ValidationError(
-                    "Numéro de téléphone ou mot de passe incorrect."
+                    "Email ou mot de passe incorrect."
                 )
             
             if not user.is_active:
@@ -112,7 +115,7 @@ class UserLoginSerializer(serializers.Serializer):
             request = self.context.get('request')
             if request:
                 LoginAttempt.objects.create(
-                    phone_number=phone_number,
+                    phone_number=user.phone_number or email,
                     ip_address=request.META.get('REMOTE_ADDR', ''),
                     user_agent=request.META.get('HTTP_USER_AGENT', ''),
                     success=True
@@ -126,7 +129,7 @@ class UserLoginSerializer(serializers.Serializer):
             return attrs
         
         raise serializers.ValidationError(
-            "Le numéro de téléphone et le mot de passe sont requis."
+            "L'email et le mot de passe sont requis."
         )
 
 
@@ -290,36 +293,86 @@ class AdminUserSerializer(serializers.ModelSerializer):
     Serializer pour les administrateurs (vue complète)
     """
     profile = serializers.SerializerMethodField()
-    recent_login_attempts = serializers.SerializerMethodField()
     
     class Meta:
         model = CustomUser
         fields = [
-            'id', 'phone_number', 'email', 'first_name', 'last_name',
-            'role', 'kyc_status', 'is_phone_verified', 'is_active',
-            'date_of_birth', 'id_card_number', 'id_card_type',
-            'address_street', 'address_city', 'address_region', 'address_country',
-            'preferred_language', 'mfa_enabled', 'created_at', 'updated_at',
-            'last_activity', 'profile', 'recent_login_attempts'
+            'id', 'email', 'phone_number', 'first_name', 'last_name', 'role',
+            'kyc_status', 'is_phone_verified', 'is_active', 'is_staff',
+            'date_joined', 'last_login', 'profile'
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'date_joined', 'last_login']
     
     def get_profile(self, obj):
-        """Obtenir les informations du profil"""
         try:
-            return UserExtendedProfileSerializer(obj).data['profile']
-        except:
+            return {
+                'occupation': obj.profile.occupation,
+                'company_name': obj.profile.company_name,
+                'location': f"{obj.address_city}, {obj.address_region}" if obj.address_city else None,
+                'total_transactions': obj.profile.total_transactions,
+                'successful_transactions': obj.profile.successful_transactions,
+                'total_volume': str(obj.profile.total_volume),
+                'rating_avg': str(obj.profile.rating_avg) if obj.profile.rating_avg else None,
+                'rating_count': obj.profile.rating_count
+            }
+        except UserProfile.DoesNotExist:
             return None
+
+
+class PasswordResetRequestSerializer(serializers.Serializer):
+    """
+    Serializer pour la demande de réinitialisation de mot de passe
+    """
+    email = serializers.EmailField(
+        help_text='Adresse email associée à votre compte'
+    )
     
-    def get_recent_login_attempts(self, obj):
-        """Obtenir les tentatives de connexion récentes"""
-        attempts = LoginAttempt.objects.filter(
-            phone_number=obj.phone_number
-        ).order_by('-attempted_at')[:5]
+    def validate_email(self, value):
+        """Valider que l'email existe"""
+        if not CustomUser.objects.filter(email=value).exists():
+            raise serializers.ValidationError('Aucun compte associé à cette adresse email.')
+        return value
+
+
+class PasswordResetConfirmSerializer(serializers.Serializer):
+    """
+    Serializer pour la confirmation de réinitialisation de mot de passe
+    """
+    email = serializers.EmailField(
+        help_text='Adresse email associée à votre compte'
+    )
+    reset_code = serializers.CharField(
+        max_length=6, 
+        min_length=6,
+        help_text='Code de réinitialisation reçu par email'
+    )
+    new_password = serializers.CharField(
+        write_only=True,
+        validators=[validate_password],
+        help_text='Nouveau mot de passe sécurisé'
+    )
+    
+    def validate_email(self, value):
+        """Valider que l'email existe"""
+        if not CustomUser.objects.filter(email=value).exists():
+            raise serializers.ValidationError('Aucun compte associé à cette adresse email.')
+        return value
+    
+    def validate(self, attrs):
+        """Validation croisée"""
+        email = attrs.get('email')
+        reset_code = attrs.get('reset_code')
         
-        return [{
-            'ip_address': attempt.ip_address,
-            'success': attempt.success,
-            'failure_reason': attempt.failure_reason,
-            'attempted_at': attempt.attempted_at,
-        } for attempt in attempts]
+        if email and reset_code:
+            try:
+                user = CustomUser.objects.get(email=email)
+                if not user.verify_password_reset_token(reset_code):
+                    raise serializers.ValidationError(
+                        "Code de réinitialisation invalide ou expiré."
+                    )
+            except CustomUser.DoesNotExist:
+                raise serializers.ValidationError(
+                    "Aucun compte associé à cette adresse email."
+                )
+        
+        return attrs

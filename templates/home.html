@@ -23,9 +23,27 @@
     }
     
     .stats-counter {
-        font-size: 2.5rem;
+        font-size: 3rem;
         font-weight: bold;
-        color: #007bff;
+        transition: all 0.3s ease;
+    }
+    
+    .stats-item {
+        transition: transform 0.3s ease;
+        border-radius: 10px;
+    }
+    
+    .stats-item:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+    
+    .stats-icon {
+        transition: transform 0.3s ease;
+    }
+    
+    .stats-item:hover .stats-icon {
+        transform: scale(1.1);
     }
 </style>
 {% endblock %}
@@ -53,7 +71,9 @@
                 </div>
             </div>
             <div class="col-lg-6 text-center">
-                <img src="{% static 'images/hero-illustration.svg' %}" alt="Kimi Escrow" class="img-fluid" style="max-height: 400px;">
+                <div class="hero-illustration">
+                    <i class="bi bi-shield-check text-white" style="font-size: 8rem; opacity: 0.8;"></i>
+                </div>
             </div>
         </div>
     </div>
@@ -176,24 +196,50 @@
 </section>
 
 <!-- Statistics -->
-<section class="py-5">
+<section class="py-5 bg-light">
     <div class="container">
+        <div class="row text-center mb-4">
+            <div class="col-12">
+                <h2 class="display-6 fw-bold mb-3">Nos Chiffres Clés</h2>
+                <p class="lead text-muted">Kimi Escrow en quelques statistiques</p>
+            </div>
+        </div>
         <div class="row text-center">
-            <div class="col-md-3 mb-4">
-                <div class="stats-counter">1,234+</div>
-                <p class="text-muted">Transactions sécurisées</p>
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="stats-item p-4">
+                    <div class="stats-icon mb-3">
+                        <i class="bi bi-shield-check text-primary" style="font-size: 2.5rem;"></i>
+                    </div>
+                    <div class="stats-counter text-primary fw-bold" data-target="1234">0</div>
+                    <p class="text-muted mb-0">Transactions sécurisées</p>
+                </div>
             </div>
-            <div class="col-md-3 mb-4">
-                <div class="stats-counter">98%</div>
-                <p class="text-muted">Taux de satisfaction</p>
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="stats-item p-4">
+                    <div class="stats-icon mb-3">
+                        <i class="bi bi-star-fill text-warning" style="font-size: 2.5rem;"></i>
+                    </div>
+                    <div class="stats-counter text-warning fw-bold" data-target="98">0</div>
+                    <p class="text-muted mb-0">% Satisfaction</p>
+                </div>
             </div>
-            <div class="col-md-3 mb-4">
-                <div class="stats-counter">500M+</div>
-                <p class="text-muted">FCFA transférés</p>
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="stats-item p-4">
+                    <div class="stats-icon mb-3">
+                        <i class="bi bi-currency-exchange text-success" style="font-size: 2.5rem;"></i>
+                    </div>
+                    <div class="stats-counter text-success fw-bold" data-target="500">0</div>
+                    <p class="text-muted mb-0">Million FCFA</p>
+                </div>
             </div>
-            <div class="col-md-3 mb-4">
-                <div class="stats-counter">24/7</div>
-                <p class="text-muted">Support client</p>
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="stats-item p-4">
+                    <div class="stats-icon mb-3">
+                        <i class="bi bi-headset text-info" style="font-size: 2.5rem;"></i>
+                    </div>
+                    <div class="stats-counter text-info fw-bold" data-target="24">0</div>
+                    <p class="text-muted mb-0">/7 Support</p>
+                </div>
             </div>
         </div>
     </div>
@@ -225,23 +271,41 @@
 
 {% block extra_js %}
 <script>
-// Animation des compteurs
+// Animation des compteurs améliorée
 document.addEventListener('DOMContentLoaded', function() {
     const counters = document.querySelectorAll('.stats-counter');
     
     const animateCounter = (counter) => {
-        const target = parseInt(counter.textContent.replace(/[^\d]/g, ''));
-        const duration = 2000;
-        const step = target / (duration / 16);
+        const target = parseInt(counter.dataset.target);
+        const duration = 2500;
+        const increment = target / (duration / 16);
         let current = 0;
         
         const timer = setInterval(() => {
-            current += step;
+            current += increment;
             if (current >= target) {
-                counter.textContent = counter.textContent.replace(/[\d,]+/, target.toLocaleString());
+                // Ajouter le suffixe approprié selon le type de statistique
+                if (counter.dataset.target === '1234') {
+                    counter.textContent = target.toLocaleString() + '+';
+                } else if (counter.dataset.target === '98') {
+                    counter.textContent = target + '%';
+                } else if (counter.dataset.target === '500') {
+                    counter.textContent = target + 'M+';
+                } else if (counter.dataset.target === '24') {
+                    counter.textContent = target + '/7';
+                }
                 clearInterval(timer);
             } else {
-                counter.textContent = counter.textContent.replace(/[\d,]+/, Math.floor(current).toLocaleString());
+                const displayValue = Math.floor(current);
+                if (counter.dataset.target === '1234') {
+                    counter.textContent = displayValue.toLocaleString();
+                } else if (counter.dataset.target === '98') {
+                    counter.textContent = displayValue;
+                } else if (counter.dataset.target === '500') {
+                    counter.textContent = displayValue;
+                } else if (counter.dataset.target === '24') {
+                    counter.textContent = displayValue;
+                }
             }
         }, 16);
     };
@@ -254,6 +318,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 observer.disconnect();
             }
         });
+    }, {
+        threshold: 0.3 // Déclencher quand 30% de la section est visible
     });
     
     if (counters.length > 0) {

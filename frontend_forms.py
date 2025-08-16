@@ -20,8 +20,17 @@ User = get_user_model()
 class CustomUserRegistrationForm(UserCreationForm):
     """Formulaire d'inscription personnalisé"""
     
+    email = forms.EmailField(
+        widget=forms.EmailInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'votre@email.com'
+        }),
+        label='Adresse email'
+    )
+    
     phone_number = forms.CharField(
         max_length=15,
+        required=False,
         validators=[
             RegexValidator(
                 regex=r'^\+237[6-9]\d{8}$',
@@ -30,9 +39,9 @@ class CustomUserRegistrationForm(UserCreationForm):
         ],
         widget=forms.TextInput(attrs={
             'class': 'form-control',
-            'placeholder': '+237XXXXXXXXX'
+            'placeholder': '+237XXXXXXXXX (optionnel)'
         }),
-        label='Numéro de téléphone'
+        label='Numéro de téléphone (optionnel)'
     )
     
     first_name = forms.CharField(
@@ -53,14 +62,7 @@ class CustomUserRegistrationForm(UserCreationForm):
         label='Nom'
     )
     
-    role = forms.ChoiceField(
-        choices=[
-            ('BUYER', 'Acheteur'),
-            ('SELLER', 'Vendeur'),
-        ],
-        widget=forms.Select(attrs={'class': 'form-select'}),
-        label='Je veux'
-    )
+    # Rôle forcé à USER - pas de sélection
     
     password1 = forms.CharField(
         label='Mot de passe',
@@ -87,11 +89,17 @@ class CustomUserRegistrationForm(UserCreationForm):
     
     class Meta:
         model = User
-        fields = ('phone_number', 'first_name', 'last_name', 'password1', 'password2')
+        fields = ('email', 'phone_number', 'first_name', 'last_name', 'password1', 'password2')
+    
+    def clean_email(self):
+        email = self.cleaned_data['email']
+        if User.objects.filter(email=email).exists():
+            raise ValidationError('Cette adresse email est déjà utilisée.')
+        return email
     
     def clean_phone_number(self):
-        phone_number = self.cleaned_data['phone_number']
-        if User.objects.filter(phone_number=phone_number).exists():
+        phone_number = self.cleaned_data.get('phone_number')
+        if phone_number and User.objects.filter(phone_number=phone_number).exists():
             raise ValidationError('Ce numéro de téléphone est déjà utilisé.')
         return phone_number
     
@@ -108,16 +116,24 @@ class CustomUserRegistrationForm(UserCreationForm):
             if not re.search(r'\d', password):
                 raise ValidationError('Le mot de passe doit contenir au moins un chiffre.')
         return password
+    
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        # Forcer le rôle USER pour tous les utilisateurs s'inscrivant via le web
+        user.role = 'USER'
+        if commit:
+            user.save()
+        return user
 
 
 class CustomLoginForm(AuthenticationForm):
     """Formulaire de connexion personnalisé"""
     
-    username = forms.CharField(
-        label='Numéro de téléphone',
-        widget=forms.TextInput(attrs={
+    username = forms.EmailField(
+        label='Adresse email',
+        widget=forms.EmailInput(attrs={
             'class': 'form-control',
-            'placeholder': '+237XXXXXXXXX'
+            'placeholder': 'votre@email.com'
         })
     )
     
@@ -782,26 +798,46 @@ class TransactionFilterForm(forms.Form):
 class PasswordResetForm(forms.Form):
     """Formulaire de réinitialisation de mot de passe"""
     
-    phone_number = forms.CharField(
-        max_length=15,
-        validators=[
-            RegexValidator(
-                regex=r'^\+237[6-9]\d{8}$',
-                message='Format: +237XXXXXXXXX (numéro camerounais valide)'
-            )
-        ],
-        widget=forms.TextInput(attrs={
+    email = forms.EmailField(
+        widget=forms.EmailInput(attrs={
             'class': 'form-control',
-            'placeholder': '+237XXXXXXXXX'
+            'placeholder': 'votre@email.com'
         }),
-        label='Numéro de téléphone'
+        label='Adresse email'
     )
     
-    def clean_phone_number(self):
-        phone_number = self.cleaned_data['phone_number']
-        if not User.objects.filter(phone_number=phone_number).exists():
-            raise ValidationError('Aucun compte associé à ce numéro de téléphone.')
-        return phone_number
+    def clean_email(self):
+        email = self.cleaned_data['email']
+        if not User.objects.filter(email=email).exists():
+            raise ValidationError('Aucun compte associé à cette adresse email.')
+        return email
+
+
+class PasswordResetCodeForm(forms.Form):
+    """Formulaire de saisie du code de réinitialisation"""
+    
+    reset_code = forms.CharField(
+        max_length=6,
+        min_length=6,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control form-control-lg text-center',
+            'placeholder': '123456',
+            'style': 'letter-spacing: 0.5em; font-size: 1.5rem; font-weight: bold;',
+            'maxlength': '6',
+            'pattern': '[0-9]{6}',
+            'autocomplete': 'one-time-code'
+        }),
+        label='Code de réinitialisation',
+        help_text='Saisissez le code à 6 chiffres reçu par email'
+    )
+    
+    def clean_reset_code(self):
+        code = self.cleaned_data['reset_code']
+        if not code.isdigit():
+            raise ValidationError('Le code doit contenir uniquement des chiffres.')
+        if len(code) != 6:
+            raise ValidationError('Le code doit contenir exactement 6 chiffres.')
+        return code
 
 
 class SetPasswordForm(forms.Form):

@@ -16,13 +16,13 @@ class IsOwnerOrReadOnly(BasePermission):
         return obj.user == request.user
 
 
-class IsBuyerOrSeller(BasePermission):
+class IsRegularUser(BasePermission):
     """
-    Permission pour les utilisateurs ayant le rôle BUYER ou SELLER
+    Permission pour les utilisateurs ayant le rôle USER
     """
     def has_permission(self, request, view):
         return (request.user.is_authenticated and 
-                request.user.role in ['BUYER', 'SELLER'])
+                request.user.role == 'USER')
 
 
 class IsArbitre(BasePermission):
@@ -88,8 +88,8 @@ class CanCreateEscrow(BasePermission):
         if not request.user.is_authenticated:
             return False
         
-        # L'utilisateur doit avoir un rôle approprié et un KYC vérifié
-        return (request.user.role in ['BUYER', 'SELLER'] and 
+        # L'utilisateur doit avoir un rôle USER et un KYC vérifié
+        return (request.user.role == 'USER' and 
                 request.user.kyc_status == 'VERIFIED')
 
 
@@ -134,3 +134,24 @@ class IsTransactionInCorrectState(BasePermission):
             return obj.transaction.status in allowed_states
         
         return True  # Si pas d'état à vérifier, on autorise
+
+
+class IsAdminOrReadOnly(BasePermission):
+    """
+    Permission pour permettre la lecture à tous et l'écriture aux admins seulement
+    """
+    def has_permission(self, request, view):
+        if request.method in permissions.SAFE_METHODS:
+            return True
+        return request.user.is_authenticated and request.user.role == 'ADMIN'
+
+
+class IsArbitreOrReadOnly(BasePermission):
+    """
+    Permission pour permettre la lecture à tous et l'écriture aux arbitres et admins
+    """
+    def has_permission(self, request, view):
+        if request.method in permissions.SAFE_METHODS:
+            return True
+        return (request.user.is_authenticated and 
+                request.user.role in ['ARBITRE', 'ADMIN'])

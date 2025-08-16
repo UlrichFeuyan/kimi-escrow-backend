@@ -1,230 +1,529 @@
-# Guide de Déploiement - Kimi Escrow Backend
+# Guide de Déploiement Production - KIMI Escrow
 
-## 🚀 Déploiement Rapide
+## Table des matières
 
-### Option 1: Déploiement avec Docker (Recommandé)
+1. [Prérequis](#prérequis)
+2. [Installation sur VPS](#installation-sur-vps)
+3. [Configuration de la base de données](#configuration-de-la-base-de-données)
+4. [Configuration SSL/HTTPS](#configuration-sslhttps)
+5. [Configuration des services](#configuration-des-services)
+6. [Déploiement initial](#déploiement-initial)
+7. [Mise à jour et maintenance](#mise-à-jour-et-maintenance)
+8. [Monitoring et logs](#monitoring-et-logs)
+9. [Sauvegarde et restauration](#sauvegarde-et-restauration)
+10. [Sécurité](#sécurité)
+11. [Optimisation des performances](#optimisation-des-performances)
+12. [Dépannage](#dépannage)
 
-#### Prérequis
-- Docker installé
-- Docker Compose installé
-- Au moins 4GB de RAM disponible
-- 10GB d'espace disque libre
+## Prérequis
 
-#### Étapes de déploiement
+### Matériel recommandé
+- **CPU**: 2+ cœurs
+- **RAM**: 4GB minimum, 8GB recommandé
+- **Stockage**: 50GB minimum (SSD recommandé)
+- **Bande passante**: 100Mbps minimum
 
-1. **Configurer l'environnement**
+### Système d'exploitation
+- Ubuntu 20.04 LTS ou plus récent
+- Debian 11 ou plus récent
+- CentOS 8+ ou Rocky Linux 8+
+
+### Logiciels requis
+- Python 3.9+
+- PostgreSQL 13+
+- Redis 6+
+- Nginx 1.18+
+- Certbot (Let's Encrypt)
+
+## Installation sur VPS
+
+### 1. Mise à jour du système
+
+```bash
+sudo apt update && sudo apt upgrade -y
+sudo apt install -y curl wget git unzip
+```
+
+### 2. Installation des dépendances système
+
+```bash
+# Paquets de base
+sudo apt install -y python3 python3-pip python3-venv python3-dev
+sudo apt install -y postgresql postgresql-contrib
+sudo apt install -y redis-server nginx
+sudo apt install -y certbot python3-certbot-nginx
+
+# Sécurité
+sudo apt install -y ufw fail2ban
+sudo apt install -y logrotate
+```
+
+### 3. Configuration du pare-feu
+
+```bash
+sudo ufw allow ssh
+sudo ufw allow 80
+sudo ufw allow 443
+sudo ufw --force enable
+```
+
+### 4. Configuration de fail2ban
+
+```bash
+sudo systemctl enable fail2ban
+sudo systemctl start fail2ban
+```
+
+## Configuration de la base de données
+
+### 1. Configuration PostgreSQL
+
+```bash
+# Création de l'utilisateur et de la base
+sudo -u postgres createuser --interactive --pwprompt kimi_escrow_user
+sudo -u postgres createdb -O kimi_escrow_user kimi_escrow_prod
+
+# Configuration de l'authentification
+sudo nano /etc/postgresql/*/main/pg_hba.conf
+```
+
+Ajouter/modifier dans `pg_hba.conf`:
+```
+# IPv4 local connections:
+host    kimi_escrow_prod    kimi_escrow_user    127.0.0.1/32            md5
+```
+
+### 2. Configuration Redis
+
+```bash
+sudo nano /etc/redis/redis.conf
+```
+
+Modifications recommandées:
+```conf
+# Sécurité
+bind 127.0.0.1
+protected-mode yes
+
+# Performance
+maxmemory 256mb
+maxmemory-policy allkeys-lru
+
+# Persistance
+save 900 1
+save 300 10
+save 60 10000
+```
+
+## Configuration SSL/HTTPS
+
+### 1. Obtention du certificat Let's Encrypt
+
    ```bash
-   # Copier le fichier d'environnement
-   cp env.production .env
-   
-   # Éditer les variables d'environnement
-   nano .env
-   ```
+# Arrêt temporaire de Nginx
+sudo systemctl stop nginx
 
-2. **Déployer l'application**
+# Obtention du certificat
+sudo certbot certonly --standalone -d yourdomain.com -d www.yourdomain.com
+
+# Redémarrage de Nginx
+sudo systemctl start nginx
+```
+
+### 2. Configuration du renouvellement automatique
+
    ```bash
-   # Déploiement complet
-   ./deploy_production.sh
-   
-   # Ou avec nettoyage complet
-   ./deploy_production.sh --clean
-   ```
+# Test du renouvellement
+sudo certbot renew --dry-run
 
-3. **Vérifier le déploiement**
+# Ajout au cron
+sudo crontab -e
+```
+
+Ajouter cette ligne:
+```
+0 12 * * * /usr/bin/certbot renew --quiet
+```
+
+## Configuration des services
+
+### 1. Configuration Nginx
+
    ```bash
-   ./check_status.sh
-   ```
+# Copie de la configuration
+sudo cp nginx.conf /etc/nginx/sites-available/kimi-escrow
 
-#### Services disponibles après déploiement
-- **Application web**: http://localhost:8003
-- **Admin Django**: http://localhost:8003/admin/
-- **API Swagger**: http://localhost:8003/swagger/
-- **Base de données**: localhost:5437
-- **Redis**: localhost:6382
+# Activation du site
+sudo ln -sf /etc/nginx/sites-available/kimi-escrow /etc/nginx/sites-enabled/
+sudo rm -f /etc/nginx/sites-enabled/default
 
-### Option 2: Développement local
+# Test de la configuration
+sudo nginx -t
 
-#### Prérequis
-- Python 3.11+
-- PostgreSQL
-- Redis
-- Environnement virtuel Python
+# Redémarrage
+sudo systemctl restart nginx
+```
 
-#### Étapes de démarrage
+### 2. Configuration systemd
 
-1. **Démarrer les services de base**
+```bash
+# Copie des fichiers de service
+sudo cp kimi_escrow.service /etc/systemd/system/
+sudo cp kimi_escrow-celery.service /etc/systemd/system/
+sudo cp kimi_escrow-celerybeat.service /etc/systemd/system/
+
+# Rechargement des services
+sudo systemctl daemon-reload
+
+# Activation des services
+sudo systemctl enable kimi_escrow
+sudo systemctl enable kimi_escrow-celery
+sudo systemctl enable kimi_escrow-celerybeat
+```
+
+## Déploiement initial
+
+### 1. Clonage du projet
+
    ```bash
-   # PostgreSQL
-   docker run --name postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=kimi_escrow -p 5437:5432 -d postgres:15
-   
-   # Redis
-   docker run --name redis -p 6382:6379 -d redis:7-alpine
-   ```
+# Création de l'utilisateur
+sudo useradd -m -s /bin/bash kimi_escrow
+sudo usermod -aG sudo kimi_escrow
 
-2. **Démarrer l'application**
+# Clonage du projet
+sudo mkdir -p /var/www/kimi-escrow
+sudo chown kimi_escrow:kimi_escrow /var/www/kimi_escrow
+sudo -u kimi_escrow git clone your-git-repo /var/www/kimi-escrow
+```
+
+### 2. Configuration de l'environnement
+
    ```bash
-   ./start_dev.sh
-   ```
+# Copie du fichier d'environnement
+sudo cp env.production /var/www/kimi-escrow/.env
+sudo chown kimi_escrow:kimi_escrow /var/www/kimi-escrow/.env
+sudo chmod 600 /var/www/kimi-escrow/.env
 
-## 🔧 Configuration
-
-### Variables d'environnement importantes
-
-#### Base de données
-```bash
-DB_NAME=kimi_escrow
-DB_USER=postgres
-DB_PASSWORD=postgres
-DB_HOST=localhost  # ou 'db' pour Docker
-DB_PORT=5432
+# Édition du fichier .env
+sudo -u kimi_escrow nano /var/www/kimi-escrow/.env
 ```
 
-#### Redis
+### 3. Installation des dépendances Python
+
 ```bash
-REDIS_URL=redis://localhost:6382/0  # ou redis://redis:6379/0 pour Docker
+cd /var/www/kimi-escrow
+
+# Création de l'environnement virtuel
+sudo -u kimi_escrow python3 -m venv venv
+sudo -u kimi_escrow venv/bin/pip install --upgrade pip
+sudo -u kimi_escrow venv/bin/pip install -r requirements.txt
 ```
 
-#### Sécurité
+### 4. Configuration de la base de données
+
 ```bash
-SECRET_KEY=your-super-secret-django-key
-DEBUG=False  # Toujours False en production
-ALLOWED_HOSTS=localhost,127.0.0.1,your-server-ip
+# Migration
+sudo -u kimi_escrow venv/bin/python manage.py migrate
+
+# Collecte des fichiers statiques
+sudo -u kimi_escrow venv/bin/python manage.py collectstatic --noinput
+
+# Création du superutilisateur
+sudo -u kimi_escrow venv/bin/python manage.py createsuperuser
 ```
 
-### Configuration des services de paiement
+### 5. Démarrage des services
 
-#### MTN Mobile Money
 ```bash
-MTN_MOMO_SUBSCRIPTION_KEY=your-mtn-subscription-key
-MTN_MOMO_API_USER=your-mtn-api-user
-MTN_MOMO_API_KEY=your-mtn-api-key
-MTN_MOMO_ENVIRONMENT=sandbox  # ou 'production'
+# Démarrage des services
+sudo systemctl start kimi_escrow
+sudo systemctl start kimi_escrow-celery
+sudo systemctl start kimi_escrow-celerybeat
+
+# Vérification du statut
+sudo systemctl status kimi_escrow
+sudo systemctl status kimi_escrow-celery
+sudo systemctl status kimi_escrow-celerybeat
 ```
 
-#### Orange Money
+## Mise à jour et maintenance
+
+### 1. Script de déploiement
+
 ```bash
-ORANGE_MONEY_CLIENT_ID=your-orange-client-id
-ORANGE_MONEY_CLIENT_SECRET=your-orange-client-secret
-ORANGE_MONEY_ENVIRONMENT=sandbox  # ou 'production'
+# Rendre le script exécutable
+chmod +x deploy_production.sh
+
+# Mise à jour
+./deploy_production.sh update
+
+# Redémarrage
+./deploy_production.sh restart
+
+# Vérification du statut
+./deploy_production.sh status
 ```
 
-## 📊 Monitoring et Maintenance
+### 2. Mise à jour manuelle
 
-### Commandes utiles
-
-#### Vérifier l'état des services
 ```bash
-./check_status.sh
+cd /var/www/kimi-escrow
+
+# Sauvegarde
+sudo -u kimi_escrow venv/bin/python manage.py dumpdata > backup_$(date +%Y%m%d_%H%M%S).json
+
+# Pull des modifications
+sudo -u kimi_escrow git pull origin main
+
+# Mise à jour des dépendances
+sudo -u kimi_escrow venv/bin/pip install -r requirements.txt
+
+# Migration
+sudo -u kimi_escrow venv/bin/python manage.py migrate
+
+# Collecte des fichiers statiques
+sudo -u kimi_escrow venv/bin/python manage.py collectstatic --noinput
+
+# Redémarrage
+sudo systemctl restart kimi_escrow
 ```
 
-#### Voir les logs
-```bash
-# Tous les services
-docker-compose logs -f
+## Monitoring et logs
 
-# Service spécifique
-docker-compose logs -f web
-docker-compose logs -f celery
-docker-compose logs -f db
+### 1. Configuration des logs
+
+```bash
+# Création des dossiers de logs
+sudo mkdir -p /var/www/kimi-escrow/logs
+sudo chown kimi_escrow:kimi_escrow /var/www/kimi-escrow/logs
+
+# Rotation des logs
+sudo nano /etc/logrotate.d/kimi-escrow
 ```
 
-#### Redémarrer un service
-```bash
-docker-compose restart web
-docker-compose restart celery
+Contenu de `/etc/logrotate.d/kimi-escrow`:
+```
+/var/www/kimi-escrow/logs/*.log {
+    daily
+    missingok
+    rotate 30
+    compress
+    delaycompress
+    notifempty
+    create 644 kimi_escrow kimi_escrow
+    postrotate
+        systemctl reload kimi_escrow
+    endscript
+}
 ```
 
-#### Arrêter tous les services
+### 2. Monitoring des services
+
 ```bash
-docker-compose down
+# Vérification des logs
+sudo journalctl -u kimi_escrow -f
+sudo journalctl -u kimi_escrow-celery -f
+sudo journalctl -u kimi_escrow-celerybeat -f
+
+# Vérification des ressources
+htop
+df -h
+free -h
 ```
 
-#### Nettoyer complètement
+### 3. Health checks
+
 ```bash
-docker-compose down -v --remove-orphans
-docker system prune -f
+# Vérification de l'API
+curl -f http://localhost:8000/health/
+
+# Vérification de Nginx
+curl -f http://localhost/health/
+
+# Vérification de la base de données
+sudo -u postgres psql -d kimi_escrow_prod -c "SELECT 1;"
 ```
 
-### Sauvegarde et restauration
+## Sauvegarde et restauration
 
-#### Sauvegarder la base de données
+### 1. Sauvegarde automatique
+
 ```bash
-docker-compose exec db pg_dump -U postgres kimi_escrow > backup_$(date +%Y%m%d_%H%M%S).sql
+# Ajout au cron
+sudo crontab -e
 ```
 
-#### Restaurer la base de données
-```bash
-docker-compose exec -T db psql -U postgres kimi_escrow < backup_file.sql
+Ajouter ces lignes:
+```
+# Sauvegarde quotidienne de la base de données
+0 2 * * * /var/www/kimi-escrow/venv/bin/python /var/www/kimi-escrow/manage.py dumpdata > /var/www/kimi-escrow/backups/db_backup_$(date +\%Y\%m\%d).json
+
+# Sauvegarde des fichiers media
+0 3 * * * tar -czf /var/www/kimi-escrow/backups/media_backup_$(date +\%Y\%m\%d).tar.gz -C /var/www/kimi-escrow media/
+
+# Nettoyage des anciennes sauvegardes (30 jours)
+0 4 * * * find /var/www/kimi-escrow/backups/ -name "*.json" -mtime +30 -delete
+0 4 * * * find /var/www/kimi-escrow/backups/ -name "*.tar.gz" -mtime +30 -delete
 ```
 
-## 🚨 Dépannage
+### 2. Restauration
 
-### Problèmes courants
-
-#### L'application ne démarre pas
-1. Vérifier les logs: `docker-compose logs web`
-2. Vérifier que PostgreSQL et Redis sont accessibles
-3. Vérifier les variables d'environnement
-
-#### Erreurs de base de données
-1. Vérifier que PostgreSQL est en cours d'exécution
-2. Vérifier les paramètres de connexion
-3. Appliquer les migrations: `docker-compose exec web python manage.py migrate`
-
-#### Erreurs Redis
-1. Vérifier que Redis est en cours d'exécution
-2. Vérifier l'URL Redis dans les variables d'environnement
-
-#### Problèmes de permissions
 ```bash
-# Donner les bonnes permissions aux scripts
-chmod +x *.sh
+# Restauration de la base de données
+sudo -u kimi_escrow venv/bin/python manage.py loaddata backup_file.json
 
-# Vérifier les permissions des volumes Docker
-sudo chown -R $USER:$USER ./logs ./media ./staticfiles
+# Restauration des fichiers media
+sudo -u kimi_escrow tar -xzf media_backup_file.tar.gz -C /var/www/kimi-escrow/
 ```
 
-### Logs et debugging
+## Sécurité
 
-#### Activer le mode debug temporairement
+### 1. Configuration du pare-feu
+
 ```bash
-# Dans le fichier .env
-DEBUG=True
+# Vérification des règles
+sudo ufw status
 
-# Redémarrer le service
-docker-compose restart web
+# Ajout de règles spécifiques si nécessaire
+sudo ufw allow from trusted_ip to any port 22
 ```
 
-#### Vérifier la santé de l'API
+### 2. Configuration fail2ban
+
 ```bash
-curl http://localhost:8000/api/core/health/
+# Vérification des prisons
+sudo fail2ban-client status
+
+# Configuration des prisons
+sudo nano /etc/fail2ban/jail.local
 ```
 
-## 🔒 Sécurité
+### 3. Mise à jour automatique
 
-### Recommandations de production
+```bash
+# Installation de unattended-upgrades
+sudo apt install -y unattended-upgrades
 
-1. **Changer tous les mots de passe par défaut**
-2. **Utiliser des clés secrètes fortes**
-3. **Configurer HTTPS avec des certificats SSL valides**
-4. **Restreindre l'accès aux ports sensibles**
-5. **Configurer un pare-feu**
-6. **Mettre en place des sauvegardes automatiques**
+# Configuration
+sudo dpkg-reconfigure -plow unattended-upgrades
+```
 
-### Variables sensibles à changer absolument
-- `SECRET_KEY`
-- `DB_PASSWORD`
-- `FIELD_ENCRYPTION_KEY`
-- Toutes les clés API des services de paiement
+## Optimisation des performances
 
-## 📞 Support
+### 1. Configuration Nginx
 
-En cas de problème:
-1. Vérifier les logs avec `./check_status.sh`
-2. Consulter la documentation Django
-3. Vérifier la configuration Docker
-4. Contacter l'équipe de développement
+```bash
+# Optimisation des workers
+sudo nano /etc/nginx/nginx.conf
+```
 
----
+Modifications recommandées:
+```nginx
+worker_processes auto;
+worker_connections 1024;
+keepalive_timeout 65;
+gzip on;
+gzip_comp_level 6;
+```
 
-**Note**: Ce guide est destiné au serveur de développement. Pour la production, des configurations supplémentaires de sécurité et de performance sont nécessaires.
+### 2. Configuration PostgreSQL
+
+```bash
+sudo nano /etc/postgresql/*/main/postgresql.conf
+```
+
+Modifications recommandées:
+```conf
+shared_buffers = 256MB
+effective_cache_size = 1GB
+work_mem = 4MB
+maintenance_work_mem = 64MB
+```
+
+### 3. Configuration Redis
+
+```bash
+sudo nano /etc/redis/redis.conf
+```
+
+Modifications recommandées:
+```conf
+maxmemory 512mb
+maxmemory-policy allkeys-lru
+save 900 1
+save 300 10
+save 60 10000
+```
+
+## Dépannage
+
+### 1. Problèmes courants
+
+#### Service ne démarre pas
+```bash
+# Vérification des logs
+sudo journalctl -u kimi_escrow -n 50
+
+# Vérification de la configuration
+sudo -u kimi_escrow venv/bin/python manage.py check
+
+# Vérification des permissions
+ls -la /var/www/kimi-escrow/
+```
+
+#### Problèmes de base de données
+```bash
+# Vérification de la connexion
+sudo -u postgres psql -d kimi_escrow_prod -c "SELECT version();"
+
+# Vérification des migrations
+sudo -u kimi_escrow venv/bin/python manage.py showmigrations
+```
+
+#### Problèmes de Celery
+```bash
+# Vérification du statut
+sudo systemctl status kimi_escrow-celery
+
+# Vérification des logs
+sudo journalctl -u kimi_escrow-celery -f
+
+# Test de connexion Redis
+redis-cli ping
+```
+
+### 2. Commandes utiles
+
+```bash
+# Redémarrage complet
+sudo systemctl restart kimi_escrow kimi_escrow-celery kimi_escrow-celerybeat nginx
+
+# Vérification des ports
+sudo netstat -tlnp | grep :8000
+sudo netstat -tlnp | grep :6379
+
+# Vérification des processus
+ps aux | grep python
+ps aux | grep celery
+
+# Nettoyage du cache Redis
+redis-cli flushall
+```
+
+### 3. Support et maintenance
+
+- **Logs d'erreur**: `/var/www/kimi-escrow/logs/`
+- **Logs système**: `/var/log/`
+- **Configuration**: `/etc/nginx/sites-available/kimi-escrow`
+- **Services**: `systemctl status kimi_escrow*`
+
+## Conclusion
+
+Ce guide couvre l'ensemble du processus de déploiement et de maintenance de KIMI Escrow en production. Pour toute question ou problème spécifique, consultez les logs et utilisez les commandes de diagnostic fournies.
+
+**Rappel important**: N'oubliez jamais de :
+- Sauvegarder régulièrement vos données
+- Maintenir vos certificats SSL à jour
+- Surveiller les performances et la sécurité
+- Tester vos sauvegardes
+- Documenter toute modification de configuration

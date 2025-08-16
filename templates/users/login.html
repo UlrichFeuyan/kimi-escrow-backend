@@ -114,11 +114,11 @@
                         <form method="post" class="needs-validation" novalidate>
                             {% csrf_token %}
                             
-                            <!-- Phone Number -->
+                            <!-- Email -->
                             <div class="form-floating mb-3">
                                 {{ form.username }}
                                 <label for="{{ form.username.id_for_label }}">
-                                    <i class="bi bi-telephone me-2"></i>{{ form.username.label }}
+                                    <i class="bi bi-envelope me-2"></i>{{ form.username.label }}
                                 </label>
                                 {% if form.username.errors %}
                                     <div class="invalid-feedback d-block">
@@ -134,7 +134,7 @@
                                     <i class="bi bi-lock me-2"></i>{{ form.password.label }}
                                 </label>
                                 <div class="password-toggle">
-                                    <button type="button" class="btn btn-link position-absolute end-0 top-50 translate-middle-y me-3" 
+                                    <button type="button" class="btn" 
                                             onclick="togglePassword('{{ form.password.id_for_label }}')">
                                         <i class="bi bi-eye" id="password-toggle-icon"></i>
                                     </button>
@@ -266,26 +266,24 @@ document.addEventListener('DOMContentLoaded', function() {
         firstInput.focus();
     }
     
-    // Phone number formatting
-    const phoneInput = document.getElementById('{{ form.username.id_for_label }}');
-    if (phoneInput) {
-        phoneInput.addEventListener('input', function(e) {
-            let value = e.target.value.replace(/\D/g, '');
-            
-            // Auto-add +237 if user starts typing numbers
-            if (value.length > 0 && !value.startsWith('237')) {
-                if (value.length === 9) {
-                    value = '237' + value;
-                }
+    // Email validation
+    const emailInput = document.getElementById('{{ form.username.id_for_label }}');
+    if (emailInput) {
+        emailInput.addEventListener('blur', function(e) {
+            const email = e.target.value.trim();
+            if (email && !isValidEmail(email)) {
+                emailInput.classList.add('is-invalid');
+                // Ajouter un message d'erreur personnalisé si nécessaire
+            } else {
+                emailInput.classList.remove('is-invalid');
             }
-            
-            // Format as +237XXXXXXXXX
-            if (value.startsWith('237') && value.length >= 3) {
-                value = '+237' + value.substring(3);
-            }
-            
-            e.target.value = value;
         });
+    }
+    
+    // Fonction de validation email
+    function isValidEmail(email) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
     }
     
     // Show loading state on submit

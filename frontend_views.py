@@ -42,7 +42,7 @@ def role_required(allowed_roles):
                 messages.error(request, 'Profil utilisateur non trouvé.')
                 return redirect('login')
             
-            if request.user.role not in allowed_roles:
+            if not hasattr(request.user, 'role') or request.user.role not in allowed_roles:
                 messages.error(request, 'Vous n\'avez pas les permissions pour accéder à cette page.')
                 return redirect('home')
             
@@ -135,10 +135,8 @@ def home(request):
     if request.user.is_authenticated:
         # Rediriger vers le dashboard approprié selon le rôle
         role = request.user.role
-        if role == 'BUYER':
-            return redirect('buyer_dashboard')
-        elif role == 'SELLER':
-            return redirect('seller_dashboard')
+        if role == 'USER':
+            return redirect('user_dashboard')  # Dashboard unifié pour tous les utilisateurs
         elif role == 'ARBITRE':
             return redirect('arbitre_dashboard')
         elif role == 'ADMIN':
@@ -161,11 +159,8 @@ def register_view(request):
             
             # L'utilisateur est déjà créé avec le rôle dans le formulaire
             
-            # Connecter l'utilisateur
-            login(request, user)
-            
-            messages.success(request, 'Inscription réussie! Vérifiez votre téléphone pour le code de vérification.')
-            return redirect('verify_phone')
+            # Rediriger vers la page de connexion après inscription réussie
+            return redirect('login')
     else:
         form = CustomUserRegistrationForm()
     
@@ -312,9 +307,9 @@ def kyc_upload(request):
 # ===== DASHBOARDS ===== #
 
 @login_required
-@role_required(['BUYER'])
-def buyer_dashboard(request):
-    """Dashboard acheteur"""
+@role_required(['USER'])
+def user_dashboard(request):
+    """Dashboard unifié pour tous les utilisateurs (acheteurs et vendeurs)"""
     # Récupérer les statistiques via API
     stats_data = get_api_data(request, '/escrow/statistics/')
     
@@ -325,24 +320,7 @@ def buyer_dashboard(request):
         'stats': stats_data.get('data', {}) if stats_data else {},
         'recent_transactions': transactions_data.get('data', {}).get('results', []) if transactions_data else [],
     }
-    return render(request, 'dashboards/buyer_dashboard.html', context)
-
-
-@login_required
-@role_required(['SELLER'])
-def seller_dashboard(request):
-    """Dashboard vendeur"""
-    # Récupérer les statistiques de vente
-    stats_data = get_api_data(request, '/escrow/statistics/')
-    
-    # Récupérer les commandes récentes
-    transactions_data = get_api_data(request, '/escrow/transactions/', {'limit': 5})
-    
-    context = {
-        'stats': stats_data.get('data', {}) if stats_data else {},
-        'recent_orders': transactions_data.get('data', {}).get('results', []) if transactions_data else [],
-    }
-    return render(request, 'dashboards/seller_dashboard.html', context)
+    return render(request, 'dashboards/user_dashboard.html', context)
 
 
 @login_required
@@ -378,7 +356,7 @@ def admin_dashboard(request):
 # ===== VUES TRANSACTIONS ===== #
 
 @login_required
-@role_required(['BUYER'])
+@role_required(['USER'])
 @kyc_required
 @csrf_protect
 def transaction_create(request):
@@ -723,31 +701,119 @@ def ajax_payment_status(request, payment_reference):
 # ===== RÉINITIALISATION DE MOT DE PASSE ===== #
 
 def password_reset(request):
-    """Page de réinitialisation de mot de passe"""
+    """Page de demande de réinitialisation de mot de passe"""
     if request.method == 'POST':
         form = PasswordResetForm(request.POST)
         if form.is_valid():
-            phone_number = form.cleaned_data['phone_number']
-            # Ici vous implémenteriez la logique de réinitialisation
-            # Pour l'instant, on simule le succès
-            messages.success(request, 'Un SMS de réinitialisation a été envoyé à votre numéro de téléphone.')
-            return redirect('login')
+            email = form.cleaned_data['email']
+            
+            # Appeler l'API de demande de réinitialisation
+            try:
+                api_url = f"{getattr(settings, 'API_BASE_URL', 'http://localhost:8000')}/api/auth/password-reset/request/"
+                response = requests.post(api_url, json={'email': email}, timeout=30)
+                
+                if response.status_code == 200:
+                    response_data = response.json()
+                    if response_data.get('success'):
+                        messages.success(request, 'Un email de réinitialisation a été envoyé à votre adresse email.')
+                        # Stocker l'email dans la session pour la prochaine étape
+                        request.session['reset_email'] = email
+                        return redirect('password_reset_code')
+                    else:
+                        error_msg = response_data.get('message', 'Erreur lors de l\'envoi')
+                        messages.error(request, error_msg)
+                else:
+                    response_data = response.json() if response.headers.get('content-type') == 'application/json' else {}
+                    error_msg = response_data.get('message', f'Erreur {response.status_code}')
+                    messages.error(request, error_msg)
+                    
+            except requests.exceptions.RequestException as e:
+                messages.error(request, 'Erreur de connexion. Veuillez réessayer.')
+            except Exception as e:
+                messages.error(request, 'Une erreur inattendue s\'est produite.')
     else:
         form = PasswordResetForm()
     
     return render(request, 'users/password_reset.html', {'form': form})
 
 
-def password_reset_confirm(request, uidb64, token):
-    """Confirmation de réinitialisation de mot de passe"""
+def password_reset_code(request):
+    """Page de saisie du code de réinitialisation"""
+    # Vérifier que l'email est en session
+    email = request.session.get('reset_email')
+    if not email:
+        messages.error(request, 'Session expirée. Veuillez recommencer.')
+        return redirect('password_reset')
+    
+    if request.method == 'POST':
+        form = PasswordResetCodeForm(request.POST)
+        if form.is_valid():
+            reset_code = form.cleaned_data['reset_code']
+            
+            # Stocker le code dans la session pour l'étape suivante
+            request.session['reset_code'] = reset_code
+            return redirect('password_reset_confirm')
+    else:
+        form = PasswordResetCodeForm()
+    
+    context = {
+        'form': form,
+        'email': email,
+    }
+    return render(request, 'users/password_reset_code.html', context)
+
+
+def password_reset_confirm(request):
+    """Page de saisie du nouveau mot de passe"""
+    # Vérifier que l'email et le code sont en session
+    email = request.session.get('reset_email')
+    reset_code = request.session.get('reset_code')
+    
+    if not email or not reset_code:
+        messages.error(request, 'Session expirée. Veuillez recommencer.')
+        return redirect('password_reset')
+    
     if request.method == 'POST':
         form = SetPasswordForm(request.POST)
         if form.is_valid():
-            # Ici vous implémenteriez la logique de confirmation
-            # Pour l'instant, on simule le succès
-            messages.success(request, 'Votre mot de passe a été modifié avec succès.')
-            return redirect('login')
+            new_password = form.cleaned_data['new_password1']
+            
+            # Appeler l'API de confirmation de réinitialisation
+            try:
+                api_url = f"{getattr(settings, 'API_BASE_URL', 'http://localhost:8000')}/api/auth/password-reset/confirm/"
+                data = {
+                    'email': email,
+                    'reset_code': reset_code,
+                    'new_password': new_password
+                }
+                response = requests.post(api_url, json=data, timeout=30)
+                
+                if response.status_code == 200:
+                    response_data = response.json()
+                    if response_data.get('success'):
+                        # Nettoyer la session
+                        request.session.pop('reset_email', None)
+                        request.session.pop('reset_code', None)
+                        
+                        messages.success(request, 'Votre mot de passe a été modifié avec succès.')
+                        return redirect('login')
+                    else:
+                        error_msg = response_data.get('message', 'Erreur lors de la réinitialisation')
+                        messages.error(request, error_msg)
+                else:
+                    response_data = response.json() if response.headers.get('content-type') == 'application/json' else {}
+                    error_msg = response_data.get('message', f'Erreur {response.status_code}')
+                    messages.error(request, error_msg)
+                    
+            except requests.exceptions.RequestException as e:
+                messages.error(request, 'Erreur de connexion. Veuillez réessayer.')
+            except Exception as e:
+                messages.error(request, 'Une erreur inattendue s\'est produite.')
     else:
         form = SetPasswordForm()
     
-    return render(request, 'users/password_reset_confirm.html', {'form': form})
+    context = {
+        'form': form,
+        'email': email,
+    }
+    return render(request, 'users/password_reset_confirm.html', context)

@@ -21,6 +21,13 @@ class EscrowTransaction(TimeStampedModel):
         ('CANCELLED', 'Annulé'),
     ]
     
+    TRANSACTION_TYPE_CHOICES = [
+        ('STANDARD', 'Transaction Standard'),
+        ('FACE_TO_FACE', 'Transaction Face-à-Face'),
+        ('MILESTONE', 'Transaction par Jalons'),
+        ('INTERNATIONAL', 'Transaction Internationale'),
+    ]
+    
     CATEGORY_CHOICES = [
         ('GOODS', 'Biens matériels'),
         ('SERVICES', 'Services'),
@@ -30,6 +37,13 @@ class EscrowTransaction(TimeStampedModel):
         ('OTHER', 'Autre'),
     ]
     
+    CURRENCY_CHOICES = [
+        ('XAF', 'Franc CFA'),
+        ('USD', 'Dollar US'),
+        ('EUR', 'Euro'),
+        ('GBP', 'Livre Sterling'),
+    ]
+    
     # Identifiants
     transaction_id = models.CharField(max_length=20, unique=True, default=generate_transaction_id)
     
@@ -37,15 +51,21 @@ class EscrowTransaction(TimeStampedModel):
     buyer = models.ForeignKey(User, on_delete=models.PROTECT, related_name='purchases')
     seller = models.ForeignKey(User, on_delete=models.PROTECT, related_name='sales')
     
+    # Type de transaction
+    transaction_type = models.CharField(max_length=20, choices=TRANSACTION_TYPE_CHOICES, default='STANDARD')
+    
     # Détails de la transaction
     title = models.CharField(max_length=200, help_text="Titre de la transaction")
     description = models.TextField(help_text="Description détaillée")
     category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default='GOODS')
     
-    # Montants (en XAF)
+    # Montants (en XAF par défaut)
     amount = models.DecimalField(max_digits=15, decimal_places=2, validators=[MinValueValidator(Decimal('1000.00'))])
     commission = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     total_amount = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+    
+    # Devise (pour transactions internationales)
+    currency = models.CharField(max_length=3, default='XAF', choices=CURRENCY_CHOICES)
     
     # Statut et dates
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING_FUNDS')
@@ -86,6 +106,8 @@ class EscrowTransaction(TimeStampedModel):
             models.Index(fields=['seller', 'status']),
             models.Index(fields=['status', 'created_at']),
             models.Index(fields=['auto_release_date']),
+            models.Index(fields=['transaction_type']),
+            models.Index(fields=['currency']),
         ]
     
     def __str__(self):
@@ -177,6 +199,18 @@ class EscrowTransaction(TimeStampedModel):
                 self.auto_release_date and 
                 timezone.now() >= self.auto_release_date and
                 self.status == 'DELIVERED')
+    
+    def is_face_to_face(self):
+        """Vérifier si c'est une transaction face-à-face"""
+        return self.transaction_type == 'FACE_TO_FACE'
+    
+    def is_milestone(self):
+        """Vérifier si c'est une transaction par jalons"""
+        return self.transaction_type == 'MILESTONE'
+    
+    def is_international(self):
+        """Vérifier si c'est une transaction internationale"""
+        return self.transaction_type == 'INTERNATIONAL'
 
 
 class Milestone(TimeStampedModel):
@@ -217,45 +251,6 @@ class Milestone(TimeStampedModel):
     
     def __str__(self):
         return f"{self.transaction.transaction_id} - Milestone {self.order}: {self.title}"
-
-
-class Proof(TimeStampedModel):
-    """Preuves de livraison et documents associés"""
-    PROOF_TYPE_CHOICES = [
-        ('DELIVERY_PHOTO', 'Photo de livraison'),
-        ('RECEIPT', 'Reçu'),
-        ('SIGNATURE', 'Signature'),
-        ('TRACKING', 'Numéro de suivi'),
-        ('INVOICE', 'Facture'),
-        ('WARRANTY', 'Garantie'),
-        ('OTHER', 'Autre'),
-    ]
-    
-    transaction = models.ForeignKey(EscrowTransaction, on_delete=models.CASCADE, related_name='proofs')
-    milestone = models.ForeignKey(Milestone, on_delete=models.CASCADE, null=True, blank=True, related_name='proofs')
-    
-    proof_type = models.CharField(max_length=20, choices=PROOF_TYPE_CHOICES)
-    title = models.CharField(max_length=200)
-    description = models.TextField(blank=True)
-    
-    file = models.FileField(upload_to='proofs/%Y/%m/%d/', null=True, blank=True)
-    text_content = models.TextField(blank=True)
-    metadata = models.JSONField(default=dict, blank=True)
-    
-    submitted_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='submitted_proofs')
-    
-    is_verified = models.BooleanField(default=False)
-    verified_at = models.DateTimeField(null=True, blank=True)
-    verified_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='verified_proofs')
-    verification_notes = models.TextField(blank=True)
-    
-    class Meta:
-        verbose_name = "Preuve"
-        verbose_name_plural = "Preuves"
-        ordering = ['-created_at']
-    
-    def __str__(self):
-        return f"{self.transaction.transaction_id} - {self.get_proof_type_display()}: {self.title}"
 
 
 class TransactionMessage(TimeStampedModel):
@@ -302,3 +297,192 @@ class TransactionRating(TimeStampedModel):
     
     def __str__(self):
         return f"{self.transaction.transaction_id} - {self.rater.get_full_name()} évalue {self.rated_user.get_full_name()}: {self.rating}★"
+
+
+class FaceToFaceDetails(TimeStampedModel):
+    """Détails spécifiques aux transactions face-à-face"""
+    transaction = models.OneToOneField(EscrowTransaction, on_delete=models.CASCADE, related_name='face_to_face_details')
+    
+    # Lieu de rencontre
+    meeting_location = models.CharField(max_length=255, help_text="Adresse ou lieu de rencontre")
+    meeting_latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    meeting_longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    meeting_address = models.TextField(blank=True)
+    
+    # Date et heure de rencontre
+    meeting_date = models.DateTimeField(help_text="Date et heure de la rencontre")
+    meeting_duration = models.PositiveIntegerField(default=60, help_text="Durée prévue en minutes")
+    
+    # Timer d'auto-validation
+    auto_validation_hours = models.PositiveIntegerField(default=24, help_text="Heures avant auto-validation")
+    auto_validation_deadline = models.DateTimeField(null=True, blank=True)
+    
+    # Preuves
+    initial_proof = models.ForeignKey('Proof', on_delete=models.SET_NULL, null=True, blank=True, related_name='face_to_face_initial')
+    final_proof = models.ForeignKey('Proof', on_delete=models.SET_NULL, null=True, blank=True, related_name='face_to_face_final')
+    
+    # Statut de la rencontre
+    meeting_status = models.CharField(max_length=20, choices=[
+        ('SCHEDULED', 'Planifiée'),
+        ('IN_PROGRESS', 'En cours'),
+        ('COMPLETED', 'Terminée'),
+        ('CANCELLED', 'Annulée'),
+        ('DISPUTED', 'En litige'),
+    ], default='SCHEDULED')
+    
+    # Notes et métadonnées
+    meeting_notes = models.TextField(blank=True)
+    metadata = models.JSONField(default=dict, blank=True)
+    
+    class Meta:
+        verbose_name = "Détails Face-à-Face"
+        verbose_name_plural = "Détails Face-à-Face"
+    
+    def __str__(self):
+        return f"Face-à-Face: {self.transaction.transaction_id} - {self.meeting_location}"
+    
+    def save(self, *args, **kwargs):
+        if not self.auto_validation_deadline and self.meeting_date:
+            from datetime import timedelta
+            from django.utils.dateparse import parse_datetime
+            from django.utils import timezone
+            
+            # S'assurer que meeting_date est un objet datetime
+            if isinstance(self.meeting_date, str):
+                self.meeting_date = parse_datetime(self.meeting_date)
+                if self.meeting_date is None:
+                    raise ValueError(f"Format de date invalide: {self.meeting_date}")
+            
+            # S'assurer que c'est aware si nécessaire
+            if self.meeting_date and timezone.is_naive(self.meeting_date):
+                self.meeting_date = timezone.make_aware(self.meeting_date)
+                
+            self.auto_validation_deadline = self.meeting_date + timedelta(hours=self.auto_validation_hours)
+        super().save(*args, **kwargs)
+
+
+class InternationalDetails(TimeStampedModel):
+    """Détails spécifiques aux transactions internationales"""
+    transaction = models.OneToOneField(EscrowTransaction, on_delete=models.CASCADE, related_name='international_details')
+    
+    # Devises
+    buyer_currency = models.CharField(max_length=3, choices=[
+        ('XAF', 'Franc CFA'),
+        ('USD', 'Dollar US'),
+        ('EUR', 'Euro'),
+        ('GBP', 'Livre Sterling'),
+    ])
+    seller_currency = models.CharField(max_length=3, choices=[
+        ('XAF', 'Franc CFA'),
+        ('USD', 'Dollar US'),
+        ('EUR', 'Euro'),
+        ('GBP', 'Livre Sterling'),
+    ])
+    
+    # Taux de change
+    exchange_rate = models.DecimalField(max_digits=10, decimal_places=6, null=True, blank=True)
+    exchange_rate_fixed = models.BooleanField(default=False, help_text="Taux fixe ou variable")
+    exchange_rate_date = models.DateTimeField(null=True, blank=True)
+    
+    # Documents d'export/import
+    invoice_number = models.CharField(max_length=100, blank=True)
+    certificate_number = models.CharField(max_length=100, blank=True)
+    bill_of_lading = models.CharField(max_length=100, blank=True)
+    
+    # Transporteur et suivi
+    carrier_name = models.CharField(max_length=100, blank=True, choices=[
+        ('DHL', 'DHL'),
+        ('FEDEX', 'FedEx'),
+        ('UPS', 'UPS'),
+        ('OTHER', 'Autre'),
+    ])
+    tracking_number = models.CharField(max_length=100, blank=True)
+    tracking_url = models.URLField(blank=True)
+    
+    # Délais d'inspection
+    inspection_days = models.PositiveIntegerField(default=5, help_text="Jours d'inspection (3-7)")
+    inspection_deadline = models.DateTimeField(null=True, blank=True)
+    
+    # Métadonnées
+    metadata = models.JSONField(default=dict, blank=True)
+    notes = models.TextField(blank=True)
+    
+    class Meta:
+        verbose_name = "Détails International"
+        verbose_name_plural = "Détails Internationaux"
+    
+    def __str__(self):
+        return f"International: {self.transaction.transaction_id} - {self.buyer_currency}/{self.seller_currency}"
+    
+    def save(self, *args, **kwargs):
+        if not self.inspection_deadline and self.transaction.delivered_at:
+            from datetime import timedelta
+            self.inspection_deadline = self.transaction.delivered_at + timedelta(days=self.inspection_days)
+        super().save(*args, **kwargs)
+
+
+class Proof(TimeStampedModel):
+    """Preuves de livraison et documents associés avec géolocalisation"""
+    PROOF_TYPE_CHOICES = [
+        ('DELIVERY_PHOTO', 'Photo de livraison'),
+        ('RECEIPT', 'Reçu'),
+        ('SIGNATURE', 'Signature'),
+        ('TRACKING', 'Numéro de suivi'),
+        ('INVOICE', 'Facture'),
+        ('WARRANTY', 'Garantie'),
+        ('FACE_TO_FACE_INITIAL', 'Preuve initiale face-à-face'),
+        ('FACE_TO_FACE_FINAL', 'Preuve finale face-à-face'),
+        ('MILESTONE_PROOF', 'Preuve de jalon'),
+        ('INTERNATIONAL_DOC', 'Document international'),
+        ('OTHER', 'Autre'),
+    ]
+    
+    transaction = models.ForeignKey(EscrowTransaction, on_delete=models.CASCADE, related_name='proofs')
+    milestone = models.ForeignKey(Milestone, on_delete=models.CASCADE, null=True, blank=True, related_name='proofs')
+    
+    proof_type = models.CharField(max_length=20, choices=PROOF_TYPE_CHOICES)
+    title = models.CharField(max_length=200)
+    description = models.TextField(blank=True)
+    
+    # Fichier et contenu
+    file = models.FileField(upload_to='proofs/%Y/%m/%d/', null=True, blank=True)
+    text_content = models.TextField(blank=True)
+    
+    # Géolocalisation
+    latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    location_address = models.CharField(max_length=255, blank=True)
+    location_accuracy = models.FloatField(null=True, blank=True, help_text="Précision GPS en mètres")
+    
+    # Métadonnées
+    metadata = models.JSONField(default=dict, blank=True)
+    submitted_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='submitted_proofs')
+    
+    # Vérification
+    is_verified = models.BooleanField(default=False)
+    verified_at = models.DateTimeField(null=True, blank=True)
+    verified_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='verified_proofs')
+    verification_notes = models.TextField(blank=True)
+    
+    class Meta:
+        verbose_name = "Preuve"
+        verbose_name_plural = "Preuves"
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['transaction', 'proof_type']),
+            models.Index(fields=['milestone', 'proof_type']),
+            models.Index(fields=['latitude', 'longitude']),
+        ]
+    
+    def __str__(self):
+        return f"{self.transaction.transaction_id} - {self.get_proof_type_display()}: {self.title}"
+    
+    def has_location(self):
+        """Vérifier si la preuve a une géolocalisation"""
+        return self.latitude is not None and self.longitude is not None
+    
+    def get_location_display(self):
+        """Obtenir l'affichage de la localisation"""
+        if self.has_location():
+            return f"{self.latitude}, {self.longitude}"
+        return self.location_address or "Localisation non disponible"

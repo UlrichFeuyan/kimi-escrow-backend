@@ -46,7 +46,7 @@ def update_kyc_status_on_document_change(sender, instance, created, **kwargs):
         user = instance.user
         
         # Si un document est rejeté, mettre le statut utilisateur en REJECTED
-        if instance.status == 'REJECTED' and user.kyc_status != 'REJECTED':
+        if instance.status == 'REJECTED' and hasattr(user, 'kyc_status') and user.kyc_status != 'REJECTED':
             user.kyc_status = 'REJECTED'
             user.kyc_rejection_reason = f"Document {instance.get_document_type_display()} rejeté: {instance.verification_notes}"
             user.save(update_fields=['kyc_status', 'kyc_rejection_reason'])
@@ -61,14 +61,19 @@ def update_kyc_status_on_document_change(sender, instance, created, **kwargs):
                 status='VERIFIED'
             ).values_list('document_type', flat=True)
             
-            if set(verified_docs) >= set(required_docs) and user.kyc_status not in ['VERIFIED', 'UNDER_REVIEW']:
+            if (set(verified_docs) >= set(required_docs) and 
+                hasattr(user, 'kyc_status') and 
+                user.kyc_status not in ['VERIFIED', 'UNDER_REVIEW']):
                 user.kyc_status = 'UNDER_REVIEW'
                 user.save(update_fields=['kyc_status'])
                 logger.info(f"Statut KYC utilisateur {user.phone_number} mis à jour: UNDER_REVIEW")
                 
                 # Notifier les admins (tâche asynchrone)
-                from .tasks import notify_admins_kyc_ready
-                notify_admins_kyc_ready.delay(user.id)
+                try:
+                    from .tasks import notify_admins_kyc_ready
+                    notify_admins_kyc_ready.delay(user.id)
+                except ImportError:
+                    logger.warning("Module tasks non disponible pour notifier les admins")
         
     except Exception as e:
         logger.error(f"Erreur mise à jour statut KYC: {e}")

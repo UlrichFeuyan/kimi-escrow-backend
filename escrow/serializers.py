@@ -1,7 +1,10 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from django.utils import timezone
-from .models import EscrowTransaction, Milestone, Proof, TransactionMessage, TransactionRating
+from .models import (
+    EscrowTransaction, Milestone, Proof, TransactionMessage, TransactionRating,
+    FaceToFaceDetails, InternationalDetails
+)
 from core.utils import is_amount_valid
 
 User = get_user_model()
@@ -51,24 +54,86 @@ class MilestoneSerializer(serializers.ModelSerializer):
         return False
 
 
+class FaceToFaceDetailsSerializer(serializers.ModelSerializer):
+    """Serializer pour les détails face-à-face"""
+    meeting_location_display = serializers.SerializerMethodField()
+    auto_validation_deadline_display = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = FaceToFaceDetails
+        fields = [
+            'id', 'meeting_location', 'meeting_latitude', 'meeting_longitude',
+            'meeting_address', 'meeting_date', 'meeting_duration',
+            'auto_validation_hours', 'auto_validation_deadline', 'auto_validation_deadline_display',
+            'initial_proof', 'final_proof', 'meeting_status', 'meeting_notes',
+            'metadata', 'created_at', 'updated_at', 'meeting_location_display'
+        ]
+        read_only_fields = [
+            'id', 'auto_validation_deadline', 'created_at', 'updated_at',
+            'meeting_location_display', 'auto_validation_deadline_display'
+        ]
+    
+    def get_meeting_location_display(self, obj):
+        if obj.meeting_latitude and obj.meeting_longitude:
+            return f"{obj.meeting_latitude}, {obj.meeting_longitude}"
+        return obj.meeting_location
+    
+    def get_auto_validation_deadline_display(self, obj):
+        if obj.auto_validation_deadline:
+            return obj.auto_validation_deadline.strftime("%d/%m/%Y %H:%M")
+        return None
+
+
+class InternationalDetailsSerializer(serializers.ModelSerializer):
+    """Serializer pour les détails internationaux"""
+    buyer_currency_display = serializers.CharField(source='get_buyer_currency_display', read_only=True)
+    seller_currency_display = serializers.CharField(source='get_seller_currency_display', read_only=True)
+    carrier_name_display = serializers.CharField(source='get_carrier_name_display', read_only=True)
+    inspection_deadline_display = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = InternationalDetails
+        fields = [
+            'id', 'buyer_currency', 'buyer_currency_display', 'seller_currency', 'seller_currency_display',
+            'exchange_rate', 'exchange_rate_fixed', 'exchange_rate_date',
+            'invoice_number', 'certificate_number', 'bill_of_lading',
+            'carrier_name', 'carrier_name_display', 'tracking_number', 'tracking_url',
+            'inspection_days', 'inspection_deadline', 'inspection_deadline_display',
+            'metadata', 'notes', 'created_at', 'updated_at'
+        ]
+        read_only_fields = [
+            'id', 'inspection_deadline', 'created_at', 'updated_at',
+            'buyer_currency_display', 'seller_currency_display', 'carrier_name_display',
+            'inspection_deadline_display'
+        ]
+    
+    def get_inspection_deadline_display(self, obj):
+        if obj.inspection_deadline:
+            return obj.inspection_deadline.strftime("%d/%m/%Y %H:%M")
+        return None
+
+
 class ProofSerializer(serializers.ModelSerializer):
-    """Serializer pour les preuves"""
+    """Serializer pour les preuves avec géolocalisation"""
     submitted_by_name = serializers.CharField(source='submitted_by.get_full_name', read_only=True)
     verified_by_name = serializers.CharField(source='verified_by.get_full_name', read_only=True)
     file_url = serializers.SerializerMethodField()
+    location_display = serializers.CharField(source='get_location_display', read_only=True)
+    has_location = serializers.BooleanField(source='has_location', read_only=True)
     
     class Meta:
         model = Proof
         fields = [
             'id', 'proof_type', 'title', 'description', 'file', 'file_url',
-            'text_content', 'metadata', 'submitted_by', 'submitted_by_name',
+            'text_content', 'latitude', 'longitude', 'location_address', 'location_accuracy',
+            'location_display', 'has_location', 'metadata', 'submitted_by', 'submitted_by_name',
             'is_verified', 'verified_at', 'verified_by', 'verified_by_name',
             'verification_notes', 'created_at', 'updated_at'
         ]
         read_only_fields = [
             'id', 'submitted_by', 'submitted_by_name', 'is_verified',
             'verified_at', 'verified_by', 'verified_by_name', 'verification_notes',
-            'created_at', 'updated_at', 'file_url'
+            'created_at', 'updated_at', 'file_url', 'location_display', 'has_location'
         ]
     
     def get_file_url(self, obj):
@@ -151,17 +216,23 @@ class EscrowTransactionListSerializer(serializers.ModelSerializer):
 
 
 class EscrowTransactionDetailSerializer(serializers.ModelSerializer):
-    """Serializer détaillé pour une transaction"""
+    """Serializer détaillé pour une transaction avec tous les détails"""
     buyer = UserSimpleSerializer(read_only=True)
     seller = UserSimpleSerializer(read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     category_display = serializers.CharField(source='get_category_display', read_only=True)
+    transaction_type_display = serializers.CharField(source='get_transaction_type_display', read_only=True)
+    currency_display = serializers.CharField(source='get_currency_display', read_only=True)
     
     # Relations
     milestones = MilestoneSerializer(many=True, read_only=True)
     proofs = ProofSerializer(many=True, read_only=True)
     messages = TransactionMessageSerializer(many=True, read_only=True)
     ratings = TransactionRatingSerializer(many=True, read_only=True)
+    
+    # Détails spécifiques selon le type
+    face_to_face_details = FaceToFaceDetailsSerializer(read_only=True)
+    international_details = InternationalDetailsSerializer(read_only=True)
     
     # Permissions et statuts
     user_role = serializers.SerializerMethodField()
@@ -176,6 +247,7 @@ class EscrowTransactionDetailSerializer(serializers.ModelSerializer):
         model = EscrowTransaction
         fields = [
             'id', 'transaction_id', 'title', 'description', 'category', 'category_display',
+            'transaction_type', 'transaction_type_display', 'currency', 'currency_display',
             'amount', 'commission', 'total_amount', 'status', 'status_display',
             'buyer', 'seller', 'user_role',
             'payment_deadline', 'delivery_deadline', 'auto_release_date', 'dispute_deadline',
@@ -184,6 +256,7 @@ class EscrowTransactionDetailSerializer(serializers.ModelSerializer):
             'delivery_address', 'delivery_method', 'tracking_info',
             'metadata', 'notes', 'created_at', 'updated_at',
             'milestones', 'proofs', 'messages', 'ratings',
+            'face_to_face_details', 'international_details',
             'can_cancel', 'can_mark_delivered', 'can_confirm_delivery', 'can_create_dispute',
             'is_overdue', 'should_auto_release'
         ]
@@ -191,8 +264,9 @@ class EscrowTransactionDetailSerializer(serializers.ModelSerializer):
             'id', 'transaction_id', 'commission', 'total_amount', 'status',
             'buyer', 'seller', 'funds_received_at', 'delivered_at', 'released_at',
             'cancelled_at', 'created_at', 'updated_at', 'milestones', 'proofs',
-            'messages', 'ratings', 'user_role', 'can_cancel', 'can_mark_delivered',
-            'can_confirm_delivery', 'can_create_dispute', 'is_overdue', 'should_auto_release'
+            'messages', 'ratings', 'face_to_face_details', 'international_details',
+            'user_role', 'can_cancel', 'can_mark_delivered', 'can_confirm_delivery',
+            'can_create_dispute', 'is_overdue', 'should_auto_release'
         ]
     
     def get_user_role(self, obj):
@@ -227,8 +301,18 @@ class EscrowTransactionDetailSerializer(serializers.ModelSerializer):
 
 
 class EscrowTransactionCreateSerializer(serializers.ModelSerializer):
-    """Serializer pour la création d'une transaction"""
+    """Serializer pour la création d'une transaction avec support des nouveaux types"""
     seller_phone = serializers.CharField(write_only=True, help_text="Numéro de téléphone du vendeur")
+    transaction_type = serializers.ChoiceField(choices=EscrowTransaction.TRANSACTION_TYPE_CHOICES, default='STANDARD')
+    currency = serializers.ChoiceField(choices=EscrowTransaction.CURRENCY_CHOICES, default='XAF')
+    
+    # Données pour face-à-face
+    face_to_face_data = serializers.DictField(required=False, help_text="Données pour transaction face-à-face")
+    
+    # Données pour international
+    international_data = serializers.DictField(required=False, help_text="Données pour transaction internationale")
+    
+    # Jalons (pour transactions standard et par jalons)
     milestones_data = serializers.ListField(
         child=serializers.DictField(),
         write_only=True,
@@ -239,11 +323,11 @@ class EscrowTransactionCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = EscrowTransaction
         fields = [
-            'title', 'description', 'category', 'amount',
+            'title', 'description', 'category', 'amount', 'transaction_type', 'currency',
             'payment_deadline', 'delivery_deadline',
             'auto_release_enabled', 'auto_release_days', 'require_delivery_confirmation',
             'delivery_address', 'delivery_method', 'notes',
-            'seller_phone', 'milestones_data'
+            'seller_phone', 'milestones_data', 'face_to_face_data', 'international_data'
         ]
     
     def validate_amount(self, value):
@@ -274,7 +358,7 @@ class EscrowTransactionCreateSerializer(serializers.ModelSerializer):
         return normalized_phone
     
     def validate(self, attrs):
-        # Vérifier les dates
+        # Validation de base
         if attrs['payment_deadline'] <= timezone.now():
             raise serializers.ValidationError(
                 {"payment_deadline": "La date limite de paiement doit être dans le futur."}
@@ -293,11 +377,39 @@ class EscrowTransactionCreateSerializer(serializers.ModelSerializer):
                 {"seller_phone": "Vous ne pouvez pas créer une transaction avec vous-même."}
             )
         
-        # Valider les jalons si fournis
-        milestones_data = attrs.get('milestones_data', [])
-        if milestones_data:
+        # Validation spécifique selon le type de transaction
+        transaction_type = attrs.get('transaction_type', 'STANDARD')
+        
+        if transaction_type == 'FACE_TO_FACE':
+            face_to_face_data = attrs.get('face_to_face_data', {})
+            if not face_to_face_data.get('meeting_location'):
+                raise serializers.ValidationError(
+                    {"face_to_face_data": "Le lieu de rencontre est obligatoire pour les transactions face-à-face."}
+                )
+            if not face_to_face_data.get('meeting_date'):
+                raise serializers.ValidationError(
+                    {"face_to_face_data": "La date de rencontre est obligatoire pour les transactions face-à-face."}
+                )
+        
+        elif transaction_type == 'INTERNATIONAL':
+            international_data = attrs.get('international_data', {})
+            if not international_data.get('buyer_currency'):
+                raise serializers.ValidationError(
+                    {"international_data": "La devise de l'acheteur est obligatoire pour les transactions internationales."}
+                )
+            if not international_data.get('seller_currency'):
+                raise serializers.ValidationError(
+                    {"international_data": "La devise du vendeur est obligatoire pour les transactions internationales."}
+                )
+        
+        elif transaction_type == 'MILESTONE':
+            milestones_data = attrs.get('milestones_data', [])
+            if not milestones_data:
+                raise serializers.ValidationError(
+                    {"milestones_data": "Les jalons sont obligatoires pour les transactions par jalons."}
+                )
             total_percentage = sum(float(m.get('percentage', 0)) for m in milestones_data)
-            if abs(total_percentage - 100.0) > 0.01:  # Tolérance pour les erreurs de floating point
+            if abs(total_percentage - 100.0) > 0.01:
                 raise serializers.ValidationError(
                     {"milestones_data": "La somme des pourcentages des jalons doit être égale à 100%."}
                 )
@@ -305,9 +417,11 @@ class EscrowTransactionCreateSerializer(serializers.ModelSerializer):
         return attrs
     
     def create(self, validated_data):
-        # Extraire les données des jalons
-        milestones_data = validated_data.pop('milestones_data', [])
+        # Extraire les données spécifiques
         seller_phone = validated_data.pop('seller_phone')
+        face_to_face_data = validated_data.pop('face_to_face_data', {})
+        international_data = validated_data.pop('international_data', {})
+        milestones_data = validated_data.pop('milestones_data', [])
         
         # Obtenir le vendeur
         seller = User.objects.get(phone_number=seller_phone)
@@ -319,7 +433,25 @@ class EscrowTransactionCreateSerializer(serializers.ModelSerializer):
             **validated_data
         )
         
-        # Créer les jalons
+        # Créer les détails spécifiques selon le type
+        if transaction.transaction_type == 'FACE_TO_FACE':
+            from django.utils.dateparse import parse_datetime
+            # Assurer que meeting_date est un objet datetime
+            if 'meeting_date' in face_to_face_data and isinstance(face_to_face_data['meeting_date'], str):
+                face_to_face_data['meeting_date'] = parse_datetime(face_to_face_data['meeting_date'])
+            
+            FaceToFaceDetails.objects.create(
+                transaction=transaction,
+                **face_to_face_data
+            )
+        
+        elif transaction.transaction_type == 'INTERNATIONAL':
+            InternationalDetails.objects.create(
+                transaction=transaction,
+                **international_data
+            )
+        
+        # Créer les jalons si fournis
         for order, milestone_data in enumerate(milestones_data, 1):
             Milestone.objects.create(
                 transaction=transaction,

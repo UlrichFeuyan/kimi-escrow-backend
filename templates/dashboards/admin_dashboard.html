@@ -1,219 +1,454 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Dashboard Admin - Kimi Escrow{% endblock %}
+{% block title %}Dashboard Administrateur - KIMI Escrow{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+<style>
+    .stat-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    .stat-card h3 {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin: 0;
+    }
+    .stat-card p {
+        margin: 0;
+        opacity: 0.9;
+    }
+    .action-card {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        border-left: 4px solid #007bff;
+    }
+    .table-responsive {
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    .btn-action {
+        border-radius: 20px;
+        padding: 0.5rem 1.5rem;
+        font-weight: 500;
+    }
+    .status-badge {
+        border-radius: 20px;
+        padding: 0.25rem 0.75rem;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container py-4">
+<div class="container-fluid">
     <div class="row">
-        <div class="col-12">
-            <h2><i class="bi bi-speedometer2 me-2"></i>Dashboard Administrateur</h2>
-            <p class="text-muted">Vue d'ensemble et gestion du système Kimi Escrow</p>
-            
-            <!-- System Stats -->
-            <div class="row mb-4">
-                <div class="col-md-3">
-                    <div class="card border-left-primary">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center">
-                                <div class="stats-icon primary me-3">
-                                    <i class="bi bi-people"></i>
-                                </div>
-                                <div>
-                                    <h3 class="text-primary">156</h3>
-                                    <p class="text-muted mb-0">Utilisateurs totaux</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="col-md-3">
-                    <div class="card border-left-warning">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center">
-                                <div class="stats-icon warning me-3">
-                                    <i class="bi bi-shield-exclamation"></i>
-                                </div>
-                                <div>
-                                    <h3 class="text-warning">8</h3>
-                                    <p class="text-muted mb-0">KYC en attente</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="col-md-3">
-                    <div class="card border-left-success">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center">
-                                <div class="stats-icon success me-3">
-                                    <i class="bi bi-arrow-left-right"></i>
-                                </div>
-                                <div>
-                                    <h3 class="text-success">89</h3>
-                                    <p class="text-muted mb-0">Transactions totales</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="col-md-3">
-                    <div class="card border-left-danger">
-                        <div class="card-body">
-                            <div class="d-flex align-items-center">
-                                <div class="stats-icon danger me-3">
-                                    <i class="bi bi-exclamation-triangle"></i>
-                                </div>
-                                <div>
-                                    <h3 class="text-danger">5</h3>
-                                    <p class="text-muted mb-0">Litiges actifs</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+        <!-- Sidebar -->
+        <nav class="col-md-3 col-lg-2 d-md-block bg-light sidebar">
+            <div class="position-sticky pt-3">
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#overview">
+                            <i class="bi bi-speedometer2"></i> Vue d'ensemble
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#users">
+                            <i class="bi bi-people"></i> Utilisateurs
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#transactions">
+                            <i class="bi bi-currency-exchange"></i> Transactions
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#disputes">
+                            <i class="bi bi-exclamation-triangle"></i> Litiges
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#reports">
+                            <i class="bi bi-graph-up"></i> Rapports
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#settings">
+                            <i class="bi bi-gear"></i> Paramètres
+                        </a>
+                    </li>
+                </ul>
             </div>
-            
-            <!-- Quick Actions -->
-            <div class="row mb-4">
-                <div class="col-12">
-                    <h5>Actions Rapides</h5>
-                </div>
-                
-                <div class="col-md-3">
-                    <a href="/admin/users/" class="btn btn-outline-primary w-100 mb-2">
-                        <i class="bi bi-people me-2"></i>Gérer Utilisateurs
-                    </a>
-                </div>
-                <div class="col-md-3">
-                    <a href="#" class="btn btn-outline-warning w-100 mb-2">
-                        <i class="bi bi-shield-check me-2"></i>Approuver KYC
-                    </a>
-                </div>
-                <div class="col-md-3">
-                    <a href="#" class="btn btn-outline-info w-100 mb-2">
-                        <i class="bi bi-list-ul me-2"></i>Voir Transactions
-                    </a>
-                </div>
-                <div class="col-md-3">
-                    <a href="#" class="btn btn-outline-danger w-100 mb-2">
-                        <i class="bi bi-exclamation-triangle me-2"></i>Gérer Litiges
-                    </a>
-                </div>
-            </div>
-            
-            <!-- Recent Activity -->
-            <div class="row">
-                <div class="col-md-8">
-                    <div class="card">
-                        <div class="card-header">
-                            <h5 class="mb-0">Activité Récente</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="timeline">
-                                <div class="timeline-item">
-                                    <div class="d-flex justify-content-between">
-                                        <small class="text-muted">Il y a 10 min</small>
-                                    </div>
-                                    <p class="mb-0"><strong>Nouveau utilisateur inscrit:</strong> +237612345678</p>
+        </nav>
+
+        <!-- Main content -->
+        <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <h1 class="h2">Dashboard Administrateur</h1>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    <div class="btn-group me-2">
+                        <button type="button" class="btn btn-sm btn-outline-secondary">Exporter</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary">Imprimer</button>
                                 </div>
-                                
-                                <div class="timeline-item">
-                                    <div class="d-flex justify-content-between">
-                                        <small class="text-muted">Il y a 1h</small>
-                                    </div>
-                                    <p class="mb-0"><strong>Transaction terminée:</strong> #TXN-001 (450,000 FCFA)</p>
-                                </div>
-                                
-                                <div class="timeline-item">
-                                    <div class="d-flex justify-content-between">
-                                        <small class="text-muted">Il y a 2h</small>
-                                    </div>
-                                    <p class="mb-0"><strong>Litige créé:</strong> #LIT-003 - Produit non conforme</p>
-                                </div>
-                                
-                                <div class="timeline-item">
-                                    <div class="d-flex justify-content-between">
-                                        <small class="text-muted">Il y a 3h</small>
-                                    </div>
-                                    <p class="mb-0"><strong>KYC approuvé:</strong> Marie Vendor (+237698765432)</p>
+                    <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle">
+                        <i class="bi bi-calendar3"></i> Cette semaine
+                    </button>
                                 </div>
                             </div>
+
+            <!-- Vue d'ensemble -->
+            <section id="overview">
+                <h3 class="mb-4">Vue d'ensemble</h3>
+                
+                <!-- Statistiques principales -->
+                <div class="row">
+                    <div class="col-xl-3 col-md-6">
+                        <div class="stat-card">
+                            <h3>{{ total_users|default:"0" }}</h3>
+                            <p>Utilisateurs totaux</p>
+                        </div>
+                    </div>
+                    <div class="col-xl-3 col-md-6">
+                        <div class="stat-card">
+                            <h3>{{ total_transactions|default:"0" }}</h3>
+                            <p>Transactions totales</p>
+                </div>
+                                </div>
+                    <div class="col-xl-3 col-md-6">
+                        <div class="stat-card">
+                            <h3>{{ total_volume|default:"0"|floatformat:0 }} XAF</h3>
+                            <p>Volume total</p>
+                                </div>
+                            </div>
+                    <div class="col-xl-3 col-md-6">
+                        <div class="stat-card">
+                            <h3>{{ pending_disputes|default:"0" }}</h3>
+                            <p>Litiges en attente</p>
                         </div>
                     </div>
                 </div>
                 
-                <div class="col-md-4">
-                    <div class="card mb-3">
-                        <div class="card-header">
-                            <h6 class="mb-0">Statistiques Système</h6>
+                <!-- Graphiques -->
+                <div class="row mt-4">
+                    <div class="col-md-6">
+                        <div class="action-card">
+                            <h5>Transactions par jour (7 derniers jours)</h5>
+                            <canvas id="transactionsChart" width="400" height="200"></canvas>
+                                </div>
+                            </div>
+                    <div class="col-md-6">
+                        <div class="action-card">
+                            <h5>Répartition par type de transaction</h5>
+                            <canvas id="transactionTypesChart" width="400" height="200"></canvas>
                         </div>
-                        <div class="card-body">
-                            <div class="mb-3">
-                                <div class="d-flex justify-content-between">
-                                    <span>Uptime Serveur</span>
-                                    <span class="text-success">99.9%</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Gestion des utilisateurs -->
+            <section id="users" class="mt-5">
+                <h3 class="mb-4">Gestion des utilisateurs</h3>
+                
+                <div class="action-card">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5>Utilisateurs récents</h5>
+                        <button class="btn btn-primary btn-action">
+                            <i class="bi bi-plus"></i> Nouvel utilisateur
+                        </button>
                                 </div>
-                                <div class="progress mt-1" style="height: 4px;">
-                                    <div class="progress-bar bg-success" style="width: 99.9%"></div>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Nom</th>
+                                    <th>Téléphone</th>
+                                    <th>Rôle</th>
+                                    <th>Statut KYC</th>
+                                    <th>Date d'inscription</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in recent_users %}
+                                <tr>
+                                    <td>{{ user.get_full_name }}</td>
+                                    <td>{{ user.phone_number }}</td>
+                                    <td>
+                                        <span class="badge bg-{% if user.role == 'ADMIN' %}danger{% elif user.role == 'ARBITRE' %}warning{% else %}info{% endif %}">
+                                            {{ user.get_role_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="status-badge bg-{% if user.kyc_status == 'VERIFIED' %}success{% elif user.kyc_status == 'PENDING' %}warning{% else %}secondary{% endif %}">
+                                            {{ user.get_kyc_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>{{ user.created_at|date:"d/m/Y" }}</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary">Voir</button>
+                                        <button class="btn btn-sm btn-outline-warning">Modifier</button>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center">Aucun utilisateur trouvé</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
                                 </div>
                             </div>
-                            
-                            <div class="mb-3">
-                                <div class="d-flex justify-content-between">
-                                    <span>API Réponse</span>
-                                    <span class="text-info">120ms</span>
-                                </div>
-                                <div class="progress mt-1" style="height: 4px;">
-                                    <div class="progress-bar bg-info" style="width: 85%"></div>
-                                </div>
-                            </div>
-                            
-                            <div class="mb-0">
-                                <div class="d-flex justify-content-between">
-                                    <span>Utilisation DB</span>
-                                    <span class="text-warning">67%</span>
-                                </div>
-                                <div class="progress mt-1" style="height: 4px;">
-                                    <div class="progress-bar bg-warning" style="width: 67%"></div>
-                                </div>
-                            </div>
+            </section>
+
+            <!-- Gestion des transactions -->
+            <section id="transactions" class="mt-5">
+                <h3 class="mb-4">Gestion des transactions</h3>
+                
+                <div class="action-card">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5>Transactions récentes</h5>
+                        <div class="btn-group">
+                            <button class="btn btn-outline-secondary btn-sm">Toutes</button>
+                            <button class="btn btn-outline-secondary btn-sm">En cours</button>
+                            <button class="btn btn-outline-secondary btn-sm">Terminées</button>
                         </div>
                     </div>
                     
-                    <div class="card">
-                        <div class="card-header">
-                            <h6 class="mb-0">Actions Requises</h6>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Titre</th>
+                                    <th>Acheteur</th>
+                                    <th>Vendeur</th>
+                                    <th>Montant</th>
+                                    <th>Type</th>
+                                    <th>Statut</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for transaction in recent_transactions %}
+                                <tr>
+                                    <td>{{ transaction.transaction_id }}</td>
+                                    <td>{{ transaction.title|truncatechars:30 }}</td>
+                                    <td>{{ transaction.buyer.get_full_name }}</td>
+                                    <td>{{ transaction.seller.get_full_name }}</td>
+                                    <td>{{ transaction.amount|floatformat:0 }} XAF</td>
+                                    <td>
+                                        <span class="badge bg-{% if transaction.transaction_type == 'FACE_TO_FACE' %}info{% elif transaction.transaction_type == 'INTERNATIONAL' %}warning{% else %}secondary{% endif %}">
+                                            {{ transaction.get_transaction_type_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="status-badge bg-{% if transaction.status == 'RELEASED' %}success{% elif transaction.status == 'DISPUTE' %}danger{% else %}warning{% endif %}">
+                                            {{ transaction.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary">Détails</button>
+                                        <button class="btn btn-sm btn-outline-warning">Modifier</button>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="8" class="text-center">Aucune transaction trouvée</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Gestion des litiges -->
+            <section id="disputes" class="mt-5">
+                <h3 class="mb-4">Gestion des litiges</h3>
+                
+                <div class="action-card">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5>Litiges en cours</h5>
+                        <button class="btn btn-success btn-action">
+                            <i class="bi bi-check-circle"></i> Assigner arbitre
+                        </button>
+                </div>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Transaction</th>
+                                    <th>Raison</th>
+                                    <th>Initié par</th>
+                                    <th>Arbitre</th>
+                                    <th>Date création</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for dispute in pending_disputes_list %}
+                                <tr>
+                                    <td>{{ dispute.transaction.transaction_id }}</td>
+                                    <td>{{ dispute.reason|truncatechars:50 }}</td>
+                                    <td>{{ dispute.initiated_by.get_full_name }}</td>
+                                    <td>
+                                        {% if dispute.arbitre %}
+                                            {{ dispute.arbitre.get_full_name }}
+                                        {% else %}
+                                            <span class="text-warning">Non assigné</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ dispute.created_at|date:"d/m/Y" }}</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary">Voir</button>
+                                        <button class="btn btn-sm btn-outline-success">Assigner</button>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center">Aucun litige en cours</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                </div>
+                </div>
+            </section>
+
+            <!-- Rapports -->
+            <section id="reports" class="mt-5">
+                <h3 class="mb-4">Rapports et analyses</h3>
+                
+            <div class="row">
+                    <div class="col-md-6">
+                        <div class="action-card">
+                            <h5>Rapport financier</h5>
+                            <ul class="list-unstyled">
+                                <li><strong>Commission totale:</strong> {{ total_commission|default:"0"|floatformat:0 }} XAF</li>
+                                <li><strong>Transactions moyennes:</strong> {{ avg_transaction|default:"0"|floatformat:0 }} XAF</li>
+                                <li><strong>Taux de réussite:</strong> {{ success_rate|default:"0"|floatformat:1 }}%</li>
+                            </ul>
+                            <button class="btn btn-primary btn-action">Générer rapport</button>
                         </div>
-                        <div class="card-body">
-                            <div class="alert alert-warning py-2 mb-2">
-                                <small><i class="bi bi-exclamation-triangle me-1"></i>
-                                8 documents KYC à réviser</small>
-                            </div>
-                            <div class="alert alert-danger py-2 mb-2">
-                                <small><i class="bi bi-exclamation-circle me-1"></i>
-                                2 litiges urgents</small>
-                            </div>
-                            <div class="alert alert-info py-2 mb-0">
-                                <small><i class="bi bi-info-circle me-1"></i>
-                                Mise à jour système disponible</small>
-                            </div>
+                                    </div>
+                    <div class="col-md-6">
+                        <div class="action-card">
+                            <h5>Rapport utilisateurs</h5>
+                            <ul class="list-unstyled">
+                                <li><strong>Nouveaux utilisateurs:</strong> {{ new_users_this_month|default:"0" }}</li>
+                                <li><strong>KYC en attente:</strong> {{ pending_kyc|default:"0" }}</li>
+                                <li><strong>Utilisateurs actifs:</strong> {{ active_users|default:"0" }}</li>
+                            </ul>
+                            <button class="btn btn-primary btn-action">Générer rapport</button>
                         </div>
                     </div>
                 </div>
-            </div>
-            
-            <!-- Back to Home -->
-            <div class="text-center mt-4">
-                <a href="/" class="btn btn-outline-secondary">
-                    <i class="bi bi-arrow-left me-2"></i>Retour à l'accueil
-                </a>
-            </div>
-        </div>
+            </section>
+
+            <!-- Paramètres système -->
+            <section id="settings" class="mt-5">
+                <h3 class="mb-4">Paramètres système</h3>
+                
+                <div class="action-card">
+                    <h5>Configuration générale</h5>
+                    <form>
+                        <div class="row">
+                            <div class="col-md-6">
+                            <div class="mb-3">
+                                    <label class="form-label">Commission escrow (%)</label>
+                                    <input type="number" class="form-control" value="2.5" step="0.1">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                            <div class="mb-3">
+                                    <label class="form-label">Délai auto-libération (jours)</label>
+                                    <input type="number" class="form-control" value="14">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Montant minimum (XAF)</label>
+                                    <input type="number" class="form-control" value="1000">
+                        </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Montant maximum (XAF)</label>
+                                    <input type="number" class="form-control" value="10000000">
+                            </div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-action">Sauvegarder</button>
+                    </form>
+                </div>
+            </section>
+        </main>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Graphique des transactions par jour
+    const transactionsCtx = document.getElementById('transactionsChart').getContext('2d');
+    new Chart(transactionsCtx, {
+        type: 'line',
+        data: {
+            labels: ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'],
+            datasets: [{
+                label: 'Transactions',
+                data: [12, 19, 3, 5, 2, 3, 7],
+                borderColor: 'rgb(75, 192, 192)',
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // Graphique des types de transaction
+    const typesCtx = document.getElementById('transactionTypesChart').getContext('2d');
+    new Chart(typesCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Standard', 'Face-à-Face', 'Jalons', 'International'],
+            datasets: [{
+                data: [65, 15, 12, 8],
+                backgroundColor: [
+                    '#FF6384',
+                    '#36A2EB',
+                    '#FFCE56',
+                    '#4BC0C0'
+                ]
+            }]
+        },
+        options: {
+            responsive: true
+        }
+    });
+</script>
 {% endblock %}
 
