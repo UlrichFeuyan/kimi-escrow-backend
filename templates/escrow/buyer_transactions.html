@@ -1,104 +1,374 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mes Transactions - Kimi Escrow</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-</head>
-<body>
-<!-- Navigation -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-    <div class="container">
-        <a class="navbar-brand" href="/">
-            <i class="bi bi-shield-check me-2"></i>Kimi Escrow
-        </a>
-        <div class="navbar-nav ms-auto">
-            <a class="nav-link" href="/">Accueil</a>
-            <a class="nav-link" href="/dashboard/buyer/">Dashboard</a>
-            <a class="nav-link" href="/disputes/buyer/">Litiges</a>
-        </div>
-    </div>
-</nav>
-<div class="container py-4">
-    <div class="row">
-        <div class="col-12">
-            <h2><i class="bi bi-cart-check me-2"></i>Mes Transactions</h2>
-            <p class="text-muted">Gérez vos achats et suivez leur statut</p>
-            
-            <!-- Demo Notice -->
-            <div class="alert alert-info">
-                <i class="bi bi-info-circle me-2"></i>
-                <strong>Page de démonstration</strong> - Cette page fait partie du frontend complet créé pour Kimi Escrow.
-                Pour la version fonctionnelle complète, utilisez les formulaires Django avec l'API DRF.
-            </div>
-            
-            <!-- Quick Actions -->
-            <div class="row mb-4">
-                <div class="col-md-3">
-                    <a href="/transactions/create/" class="btn btn-primary w-100">
-                        <i class="bi bi-plus-circle me-2"></i>Nouvelle Transaction
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Mes Transactions - Kimi Escrow{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+    <!-- Hero Section avec design cohérent -->
+    <div class="gradient-bg text-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+                <div class="mb-6 lg:mb-0">
+                    <h1 class="text-3xl lg:text-4xl font-bold mb-2">
+                        💼 Mes Transactions
+                    </h1>
+                    <p class="text-blue-100 text-lg">
+                        Gérez vos achats et suivez leur statut en temps réel
+                    </p>
+                </div>
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <a href="{% url 'transaction_create' %}" 
+                       class="inline-flex items-center justify-center px-6 py-3 bg-white text-primary font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                        </svg>
+                        Nouvelle Transaction
+                    </a>
+                    <a href="{% url 'user_dashboard' %}" 
+                       class="inline-flex items-center justify-center px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                        </svg>
+                        Dashboard
                     </a>
                 </div>
-                <div class="col-md-3">
-                    <select class="form-select">
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8 pt-16">
+        
+        <!-- Filtres et recherche -->
+        <div class="bg-white rounded-2xl shadow-xl p-6 mb-8 card-hover animate-fade-in">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Statut</label>
+                    <select class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 focus:bg-white transition-all duration-300">
                         <option>Toutes les transactions</option>
                         <option>En attente</option>
                         <option>Payées</option>
                         <option>Livrées</option>
                         <option>Terminées</option>
+                        <option>En litige</option>
                     </select>
                 </div>
-                <div class="col-md-3">
-                    <input type="text" class="form-control" placeholder="Rechercher...">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Période</label>
+                    <select class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 focus:bg-white transition-all duration-300">
+                        <option>Toutes les périodes</option>
+                        <option>Cette semaine</option>
+                        <option>Ce mois</option>
+                        <option>3 derniers mois</option>
+                        <option>Cette année</option>
+                    </select>
                 </div>
-                <div class="col-md-3">
-                    <a href="/" class="btn btn-outline-secondary w-100">
-                        <i class="bi bi-arrow-left me-2"></i>Retour
-                    </a>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Montant</label>
+                    <select class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 focus:bg-white transition-all duration-300">
+                        <option>Tous les montants</option>
+                        <option>< 100,000 FCFA</option>
+                        <option>100K - 500K FCFA</option>
+                        <option>500K - 1M FCFA</option>
+                        <option>> 1M FCFA</option>
+                    </select>
                 </div>
-            </div>
-            
-            <!-- Demo Transactions -->
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="card mb-3">
-                        <div class="card-body">
-                            <h5 class="card-title">iPhone 13 Pro Max</h5>
-                            <p class="card-text">256GB, état neuf avec accessoires</p>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <span class="badge bg-warning">En attente</span>
-                                <strong>450,000 FCFA</strong>
-                            </div>
-                            <div class="mt-2">
-                                <button class="btn btn-success btn-sm">Payer</button>
-                                <button class="btn btn-outline-primary btn-sm">Détails</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="col-md-6">
-                    <div class="card mb-3">
-                        <div class="card-body">
-                            <h5 class="card-title">MacBook Air M2</h5>
-                            <p class="card-text">13 pouces, 8GB RAM, 256GB SSD</p>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <span class="badge bg-info">Payé</span>
-                                <strong>850,000 FCFA</strong>
-                            </div>
-                            <div class="mt-2">
-                                <button class="btn btn-primary btn-sm">Suivre livraison</button>
-                                <button class="btn btn-outline-primary btn-sm">Détails</button>
-                            </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Recherche</label>
+                    <div class="relative">
+                        <input type="text" 
+                               placeholder="Produit, vendeur..." 
+                               class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 focus:bg-white transition-all duration-300">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center">
+                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                            </svg>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+
+        <!-- Statistiques rapides -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-2xl shadow-lg p-6 card-hover animate-fade-in" style="animation-delay: 0.1s;">
+                <div class="flex items-center">
+                    <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Total</p>
+                        <p class="text-2xl font-bold text-gray-900">8</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-2xl shadow-lg p-6 card-hover animate-fade-in" style="animation-delay: 0.2s;">
+                <div class="flex items-center">
+                    <div class="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center">
+                        <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">En cours</p>
+                        <p class="text-2xl font-bold text-yellow-600">3</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-2xl shadow-lg p-6 card-hover animate-fade-in" style="animation-delay: 0.3s;">
+                <div class="flex items-center">
+                    <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                        <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Terminées</p>
+                        <p class="text-2xl font-bold text-green-600">5</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-2xl shadow-lg p-6 card-hover animate-fade-in" style="animation-delay: 0.4s;">
+                <div class="flex items-center">
+                    <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                        <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Volume total</p>
+                        <p class="text-2xl font-bold text-purple-600">3.2M</p>
+                        <p class="text-xs text-gray-500">FCFA</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Liste des transactions -->
+        <div class="bg-white rounded-2xl shadow-xl overflow-hidden animate-fade-in" style="animation-delay: 0.5s;">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-bold text-gray-900">Transactions récentes</h3>
+            </div>
+            
+            <div class="divide-y divide-gray-200">
+                <!-- Transaction 1 -->
+                <div class="p-6 hover:bg-gray-50 transition-colors duration-200">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-16 h-16 bg-gradient-to-br from-blue-100 to-purple-100 rounded-xl flex items-center justify-center">
+                                <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h4 class="text-lg font-semibold text-gray-900">iPhone 13 Pro Max</h4>
+                                <p class="text-gray-600">256GB, état neuf avec accessoires</p>
+                                <div class="flex items-center mt-2 space-x-4">
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                        ⏳ En attente
+                                    </span>
+                                    <span class="text-sm text-gray-500">ID: #12345</span>
+                                    <span class="text-sm text-gray-500">Créée il y a 2h</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-2xl font-bold text-gray-900">450,000</p>
+                            <p class="text-sm text-gray-500">FCFA</p>
+                            <div class="mt-3 space-x-2">
+                                <button class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors duration-200">
+                                    💳 Payer
+                                </button>
+                                <button class="px-4 py-2 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors duration-200">
+                                    📄 Détails
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Transaction 2 -->
+                <div class="p-6 hover:bg-gray-50 transition-colors duration-200">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-16 h-16 bg-gradient-to-br from-gray-100 to-blue-100 rounded-xl flex items-center justify-center">
+                                <svg class="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h4 class="text-lg font-semibold text-gray-900">MacBook Air M2</h4>
+                                <p class="text-gray-600">13 pouces, 8GB RAM, 256GB SSD</p>
+                                <div class="flex items-center mt-2 space-x-4">
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                        💰 Payé
+                                    </span>
+                                    <span class="text-sm text-gray-500">ID: #12344</span>
+                                    <span class="text-sm text-gray-500">Créée il y a 1j</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-2xl font-bold text-gray-900">850,000</p>
+                            <p class="text-sm text-gray-500">FCFA</p>
+                            <div class="mt-3 space-x-2">
+                                <button class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors duration-200">
+                                    🚚 Suivre
+                                </button>
+                                <button class="px-4 py-2 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors duration-200">
+                                    📄 Détails
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Transaction 3 -->
+                <div class="p-6 hover:bg-gray-50 transition-colors duration-200">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-16 h-16 bg-gradient-to-br from-green-100 to-blue-100 rounded-xl flex items-center justify-center">
+                                <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2h4a1 1 0 010 2h-1v12a2 2 0 01-2 2H6a2 2 0 01-2-2V6H3a1 1 0 010-2h4zM9 3v1h6V3H9zm2 5a1 1 0 100 2 1 1 0 000-2z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h4 class="text-lg font-semibold text-gray-900">AirPods Pro 2ème gen</h4>
+                                <p class="text-gray-600">Avec boîtier de charge MagSafe</p>
+                                <div class="flex items-center mt-2 space-x-4">
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                        ✅ Terminé
+                                    </span>
+                                    <span class="text-sm text-gray-500">ID: #12343</span>
+                                    <span class="text-sm text-gray-500">Terminée il y a 3j</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-2xl font-bold text-gray-900">125,000</p>
+                            <p class="text-sm text-gray-500">FCFA</p>
+                            <div class="mt-3 space-x-2">
+                                <button class="px-4 py-2 border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-50 transition-colors duration-200">
+                                    📄 Détails
+                                </button>
+                                <button class="px-4 py-2 bg-purple-100 text-purple-700 text-sm font-medium rounded-lg hover:bg-purple-200 transition-colors duration-200">
+                                    ⭐ Noter
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pagination -->
+            <div class="px-6 py-4 border-t border-gray-200 bg-gray-50">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <p class="text-sm text-gray-700">
+                            Affichage <span class="font-medium">1</span> à <span class="font-medium">3</span> de
+                            <span class="font-medium">8</span> transactions
+                        </p>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button class="px-3 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-500 bg-white hover:bg-gray-50">
+                            Précédent
+                        </button>
+                        <button class="px-3 py-2 border border-gray-300 text-sm font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700">
+                            1
+                        </button>
+                        <button class="px-3 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-500 bg-white hover:bg-gray-50">
+                            2
+                        </button>
+                        <button class="px-3 py-2 border border-gray-300 text-sm font-medium rounded-lg text-gray-500 bg-white hover:bg-gray-50">
+                            Suivant
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Espacement avant footer -->
+        <div class="h-16"></div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Filtres interactifs
+    const statusFilter = document.querySelector('select');
+    const searchInput = document.querySelector('input[type="text"]');
+    
+    // Simulation de filtrage en temps réel
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            // Ici on pourrait filtrer les résultats
+            console.log('Recherche:', this.value);
+        });
+    }
+    
+    // Actions sur les transactions
+    const buttons = document.querySelectorAll('button');
+    buttons.forEach(button => {
+        button.addEventListener('click', function() {
+            const action = this.textContent.trim();
+            if (action.includes('Payer')) {
+                showToast('Redirection vers le paiement...', 'info');
+            } else if (action.includes('Suivre')) {
+                showToast('Ouverture du suivi de livraison...', 'info');
+            } else if (action.includes('Détails')) {
+                showToast('Affichage des détails...', 'info');
+            } else if (action.includes('Noter')) {
+                showToast('Ouverture de la page d\'évaluation...', 'info');
+            }
+        });
+    });
+});
+
+function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `fixed top-4 right-4 z-50 p-4 rounded-xl shadow-lg text-white transition-all duration-300 transform translate-x-full`;
+    
+    if (type === 'info') {
+        toast.classList.add('bg-blue-600');
+    } else if (type === 'success') {
+        toast.classList.add('bg-green-600');
+    } else if (type === 'error') {
+        toast.classList.add('bg-red-600');
+    }
+    
+    toast.innerHTML = `
+        <div class="flex items-center">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            ${message}
+        </div>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    // Animation d'entrée
+    setTimeout(() => {
+        toast.classList.remove('translate-x-full');
+    }, 100);
+    
+    // Animation de sortie
+    setTimeout(() => {
+        toast.classList.add('translate-x-full');
+        setTimeout(() => {
+            toast.remove();
+        }, 300);
+    }, 3000);
+}
+</script>
 {% endblock %}
 
 
